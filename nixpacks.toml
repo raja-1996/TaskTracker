@@ -1,0 +1,14 @@
+# Nixpacks Configuration for Task Tracker
+# This file provides build optimizations for the Next.js application
+
+[variables]
+NODE_ENV = "production"
+NEXT_TELEMETRY_DISABLED = "1"
+
+[phases.build]
+# Use the build command that includes turbopack for faster builds
+cmds = ["npm run build"]
+
+[start]
+# Start the production server
+cmd = "npm start"

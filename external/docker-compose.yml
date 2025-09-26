@@ -1,0 +1,64 @@
+version: "3.8"
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:17-alpine
+    container_name: tasktracker-db
+    environment:
+      POSTGRES_DB: tasktracker
+      POSTGRES_USER: tasktracker_user
+      POSTGRES_PASSWORD: tasktracker_password
+      POSTGRES_PORT: 5432
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tasktracker_user -d tasktracker"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # PostgREST API Server (provides REST API for PostgreSQL)
+  postgrest:
+    image: postgrest/postgrest:v12.2.0
+    container_name: tasktracker-api
+    environment:
+      PGRST_DB_URI: postgres://tasktracker_user:tasktracker_password@postgres:5432/tasktracker
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: tasktracker_user
+      PGRST_DB_ROOT_SPEC: root
+      PGRST_OPENAPI_MODE: ignore-privileges
+      PGRST_JWT_SECRET: local-development-jwt-secret-key-for-tasktracker-app
+    ports:
+      - "3003:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # PostgreSQL Admin Interface (optional)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: tasktracker-admin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@tasktracker.local
+      PGADMIN_DEFAULT_PASSWORD: admin_password
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "8080:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    profiles: ["admin"] # Optional service, start with: docker-compose --profile admin up
+
+volumes:
+  postgres_data:
+    driver: local
+  pgadmin_data:
+    driver: local
