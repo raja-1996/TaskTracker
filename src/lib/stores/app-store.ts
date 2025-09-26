@@ -12,9 +12,6 @@ import {
     ProjectInsert,
     TaskInsert,
     SubtaskInsert,
-    ProjectDetailsInsert,
-    TaskDetailsInsert,
-    SubtaskDetailsInsert,
     CommentInsert,
     EntityType
 } from '@/types/database'
@@ -421,7 +418,7 @@ export const useAppStore = create<AppState>()(
                     }))
 
                     // Update each task individually
-                    await Promise.all(updates.map(async (update: any) =>
+                    await Promise.all(updates.map(async (update: { id: string; order_index: number; updated_at: string }) =>
                         localApiClient.updateTask(update.id, update)
                     ))
 
@@ -561,7 +558,7 @@ export const useAppStore = create<AppState>()(
                     }))
 
                     // Update each subtask individually
-                    await Promise.all(updates.map(async (update: any) =>
+                    await Promise.all(updates.map(async (update: { id: string; order_index: number; updated_at: string }) =>
                         localApiClient.updateSubtask(update.id, update)
                     ))
 

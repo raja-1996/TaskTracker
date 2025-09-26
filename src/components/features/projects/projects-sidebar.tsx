@@ -4,11 +4,9 @@ import { useState } from "react";
 import { useAppStore } from "@/lib/stores/app-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Archive, ArchiveRestore } from "lucide-react";
 import { ProjectItem } from "./project-item";
 import { CreateProjectDialog } from "./create-project-dialog";
-import { format } from "date-fns";
 
 export function ProjectsSidebar() {
     const {

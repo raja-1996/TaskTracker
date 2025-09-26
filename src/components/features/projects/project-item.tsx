@@ -12,8 +12,7 @@ import {
     Trash2,
     Calendar,
     CheckCircle2,
-    Circle,
-    Clock
+    Circle
 } from "lucide-react";
 import {
     DropdownMenu,
@@ -59,8 +58,9 @@ export function ProjectItem({ project, isSelected, onSelect }: ProjectItemProps)
         setIsMenuOpen(false);
     };
 
-    const StatusIcon = statusConfig[project.status].icon;
-    const isOverdue = project.due_date && new Date(project.due_date) < new Date() && project.status !== 'Completed';
+    const currentStatus = (project.status as ProjectStatus) || 'Active';
+    const StatusIcon = statusConfig[currentStatus].icon;
+    const isOverdue = project.due_date && new Date(project.due_date) < new Date() && currentStatus !== 'Completed';
 
     return (
         <Card
@@ -75,7 +75,7 @@ export function ProjectItem({ project, isSelected, onSelect }: ProjectItemProps)
                 <div className="flex-1 min-w-0">
                     {/* Status and Title */}
                     <div className="flex items-center gap-2 mb-1">
-                        <StatusIcon className={cn("h-4 w-4", statusConfig[project.status].color)} />
+                        <StatusIcon className={cn("h-4 w-4", statusConfig[currentStatus].color)} />
                         <h3 className="font-medium text-sm truncate">{project.name}</h3>
                     </div>
 
@@ -112,13 +112,13 @@ export function ProjectItem({ project, isSelected, onSelect }: ProjectItemProps)
                         <DropdownMenuSeparator />
 
                         {/* Status Changes */}
-                        {project.status !== 'Active' && (
+                        {currentStatus !== 'Active' && (
                             <DropdownMenuItem onClick={() => handleStatusChange('Active')}>
                                 <Circle className="h-4 w-4 mr-2" />
                                 Mark Active
                             </DropdownMenuItem>
                         )}
-                        {project.status !== 'Completed' && (
+                        {currentStatus !== 'Completed' && (
                             <DropdownMenuItem onClick={() => handleStatusChange('Completed')}>
                                 <CheckCircle2 className="h-4 w-4 mr-2" />
                                 Mark Complete

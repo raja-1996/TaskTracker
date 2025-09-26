@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2025-09-26] - Build and Deployment Fixes
+
+### Fixed
+- Resolved TypeScript compilation errors causing deployment failures
+- Fixed `@typescript-eslint/no-explicit-any` errors in app store by defining proper types for update operations
+- Fixed `Type 'null' cannot be used as an index type` error in ProjectItem component by adding null safety for project status
+- Added proper type casting and fallback values for project status handling
+
+### Changed
+- Removed deprecated `swcMinify` configuration from next.config.ts (enabled by default in Next.js 15+)
+- Enhanced type safety in reorderTasks and reorderSubtasks functions with explicit interface definitions
+- Improved null safety handling for project status with 'Active' as default fallback
+
+### Removed
+- Unused import statements: `Clock` from project-item.tsx, `Card/CardContent/CardHeader/CardTitle` from projects-sidebar.tsx, `format` from date-fns
+- Unused type imports: `ProjectDetailsInsert`, `TaskDetailsInsert`, `SubtaskDetailsInsert` from app store
+
 ## [2025-09-26] - Platform-Agnostic Deployment with Nixpacks
 
 ### Added
