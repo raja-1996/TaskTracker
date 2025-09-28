@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
-import { localApiClient } from '@/lib/local-api/client'
+import { supabaseApiClient } from '@/lib/supabase/api-client'
 import {
     Project,
     Task,
@@ -118,7 +118,7 @@ export const useAppStore = create<AppState>()(
             // Auth Actions
             setUserId: (userId) => {
                 set({ userId })
-                localApiClient.setUserId(userId)
+                supabaseApiClient.setUserId(userId)
             },
 
             // UI Actions
@@ -222,7 +222,7 @@ export const useAppStore = create<AppState>()(
             loadProjects: async () => {
                 try {
                     set({ isLoading: true, error: null })
-                    const data = await localApiClient.getProjects()
+                    const data = await supabaseApiClient.getProjects()
                     set({ projects: data || [] })
                 } catch (error) {
                     set({ error: (error as Error).message })
@@ -246,7 +246,7 @@ export const useAppStore = create<AppState>()(
                         due_date: project.due_date ?? null,
                         owner: project.owner ?? null
                     }
-                    const data = await localApiClient.createProject(sanitizedProject)
+                    const data = await supabaseApiClient.createProject(sanitizedProject)
                     const createdProject = data && data.length > 0 ? data[0] : null
                     if (!createdProject) throw new Error('Failed to create project')
 
@@ -265,7 +265,7 @@ export const useAppStore = create<AppState>()(
             updateProject: async (id, project) => {
                 try {
                     set({ isLoading: true, error: null })
-                    const data = await localApiClient.updateProject(id, { ...project, updated_at: new Date().toISOString() })
+                    const data = await supabaseApiClient.updateProject(id, { ...project, updated_at: new Date().toISOString() })
                     const updatedProject = data && data.length > 0 ? data[0] : null
                     if (!updatedProject) throw new Error('Failed to update project')
 
@@ -283,7 +283,7 @@ export const useAppStore = create<AppState>()(
             deleteProject: async (id) => {
                 try {
                     set({ isLoading: true, error: null })
-                    await localApiClient.deleteProject(id)
+                    await supabaseApiClient.deleteProject(id)
 
                     const projects = get().projects
                     set({
@@ -309,7 +309,7 @@ export const useAppStore = create<AppState>()(
             loadProjectDetails: async (projectId) => {
                 try {
                     set({ isLoading: true, error: null })
-                    const data = await localApiClient.getProjectDetails(projectId)
+                    const data = await supabaseApiClient.getProjectDetails(projectId)
                     const details = data && data.length > 0 ? data[0] : null
                     set({ projectDetails: details })
                 } catch (error) {
@@ -323,14 +323,14 @@ export const useAppStore = create<AppState>()(
                 try {
                     set({ isLoading: true, error: null })
 
-                    let data = await localApiClient.updateProjectDetails(projectId, {
+                    let data = await supabaseApiClient.updateProjectDetails(projectId, {
                         project_id: projectId,
                         description,
                         updated_at: new Date().toISOString()
                     })
 
                     if (!data || data.length === 0) {
-                        data = await localApiClient.createProjectDetails({
+                        data = await supabaseApiClient.createProjectDetails({
                             project_id: projectId,
                             description,
                         })
@@ -349,7 +349,7 @@ export const useAppStore = create<AppState>()(
             loadTasks: async (projectId) => {
                 try {
                     set({ isLoading: true, error: null })
-                    const data = await localApiClient.getTasks(projectId)
+                    const data = await supabaseApiClient.getTasks(projectId)
                     set({ tasks: data || [] })
                 } catch (error) {
                     set({ error: (error as Error).message })
@@ -366,7 +366,7 @@ export const useAppStore = create<AppState>()(
                         ...task,
                         status: task.status ?? null
                     }
-                    const data = await localApiClient.createTask(sanitizedTask)
+                    const data = await supabaseApiClient.createTask(sanitizedTask)
                     const createdTask = data && data.length > 0 ? data[0] : null
                     if (!createdTask) throw new Error('Failed to create task')
 
@@ -385,7 +385,7 @@ export const useAppStore = create<AppState>()(
             updateTask: async (id, task) => {
                 try {
                     set({ isLoading: true, error: null })
-                    const data = await localApiClient.updateTask(id, { ...task, updated_at: new Date().toISOString() })
+                    const data = await supabaseApiClient.updateTask(id, { ...task, updated_at: new Date().toISOString() })
                     const updatedTask = data && data.length > 0 ? data[0] : null
                     if (!updatedTask) throw new Error('Failed to update task')
 
@@ -403,7 +403,7 @@ export const useAppStore = create<AppState>()(
             deleteTask: async (id) => {
                 try {
                     set({ isLoading: true, error: null })
-                    await localApiClient.deleteTask(id)
+                    await supabaseApiClient.deleteTask(id)
 
                     const tasks = get().tasks
                     set({
@@ -434,7 +434,7 @@ export const useAppStore = create<AppState>()(
 
                     // Update each task individually
                     await Promise.all(updates.map(async (update: { id: string; order_index: number; updated_at: string }) =>
-                        localApiClient.updateTask(update.id, update)
+                        supabaseApiClient.updateTask(update.id, update)
                     ))
 
                     set({ tasks })
@@ -449,7 +449,7 @@ export const useAppStore = create<AppState>()(
             loadTaskDetails: async (taskId) => {
                 try {
                     set({ isLoading: true, error: null })
-                    const data = await localApiClient.getTaskDetails(taskId)
+                    const data = await supabaseApiClient.getTaskDetails(taskId)
                     const details = data && data.length > 0 ? data[0] : null
                     set({ taskDetails: details })
                 } catch (error) {
@@ -463,14 +463,14 @@ export const useAppStore = create<AppState>()(
                 try {
                     set({ isLoading: true, error: null })
 
-                    let data = await localApiClient.updateTaskDetails(taskId, {
+                    let data = await supabaseApiClient.updateTaskDetails(taskId, {
                         task_id: taskId,
                         description,
                         updated_at: new Date().toISOString()
                     })
 
                     if (!data || data.length === 0) {
-                        data = await localApiClient.createTaskDetails({
+                        data = await supabaseApiClient.createTaskDetails({
                             task_id: taskId,
                             description,
                         })
@@ -489,7 +489,7 @@ export const useAppStore = create<AppState>()(
             loadSubtasks: async (taskId) => {
                 try {
                     set({ isLoading: true, error: null })
-                    const data = await localApiClient.getSubtasks(taskId)
+                    const data = await supabaseApiClient.getSubtasks(taskId)
                     set({ subtasks: data || [] })
                 } catch (error) {
                     set({ error: (error as Error).message })
@@ -506,7 +506,7 @@ export const useAppStore = create<AppState>()(
                         ...subtask,
                         status: subtask.status ?? null
                     }
-                    const data = await localApiClient.createSubtask(sanitizedSubtask)
+                    const data = await supabaseApiClient.createSubtask(sanitizedSubtask)
                     const createdSubtask = data && data.length > 0 ? data[0] : null
                     if (!createdSubtask) throw new Error('Failed to create subtask')
 
@@ -525,7 +525,7 @@ export const useAppStore = create<AppState>()(
             updateSubtask: async (id, subtask) => {
                 try {
                     set({ isLoading: true, error: null })
-                    const data = await localApiClient.updateSubtask(id, { ...subtask, updated_at: new Date().toISOString() })
+                    const data = await supabaseApiClient.updateSubtask(id, { ...subtask, updated_at: new Date().toISOString() })
                     const updatedSubtask = data && data.length > 0 ? data[0] : null
                     if (!updatedSubtask) throw new Error('Failed to update subtask')
 
@@ -543,7 +543,7 @@ export const useAppStore = create<AppState>()(
             deleteSubtask: async (id) => {
                 try {
                     set({ isLoading: true, error: null })
-                    await localApiClient.deleteSubtask(id)
+                    await supabaseApiClient.deleteSubtask(id)
 
                     const subtasks = get().subtasks
                     set({
@@ -574,7 +574,7 @@ export const useAppStore = create<AppState>()(
 
                     // Update each subtask individually
                     await Promise.all(updates.map(async (update: { id: string; order_index: number; updated_at: string }) =>
-                        localApiClient.updateSubtask(update.id, update)
+                        supabaseApiClient.updateSubtask(update.id, update)
                     ))
 
                     set({ subtasks })
@@ -589,7 +589,7 @@ export const useAppStore = create<AppState>()(
             loadSubtaskDetails: async (subtaskId) => {
                 try {
                     set({ isLoading: true, error: null })
-                    const data = await localApiClient.getSubtaskDetails(subtaskId)
+                    const data = await supabaseApiClient.getSubtaskDetails(subtaskId)
                     const details = data && data.length > 0 ? data[0] : null
                     set({ subtaskDetails: details })
                 } catch (error) {
@@ -604,7 +604,7 @@ export const useAppStore = create<AppState>()(
                     set({ isLoading: true, error: null })
 
                     // First try to update existing record
-                    let data = await localApiClient.updateSubtaskDetails(subtaskId, {
+                    let data = await supabaseApiClient.updateSubtaskDetails(subtaskId, {
                         subtask_id: subtaskId,
                         description,
                         updated_at: new Date().toISOString()
@@ -612,7 +612,7 @@ export const useAppStore = create<AppState>()(
 
                     // If no record was updated, create a new one
                     if (!data || data.length === 0) {
-                        data = await localApiClient.createSubtaskDetails({
+                        data = await supabaseApiClient.createSubtaskDetails({
                             subtask_id: subtaskId,
                             description,
                         })
@@ -631,7 +631,7 @@ export const useAppStore = create<AppState>()(
             loadComments: async (entityType, entityId) => {
                 try {
                     set({ isLoading: true, error: null })
-                    const data = await localApiClient.getComments(entityType, entityId)
+                    const data = await supabaseApiClient.getComments(entityType, entityId)
                     set({ comments: data || [] })
                 } catch (error) {
                     set({ error: (error as Error).message })
@@ -643,7 +643,7 @@ export const useAppStore = create<AppState>()(
             createComment: async (comment) => {
                 try {
                     set({ isLoading: true, error: null })
-                    const data = await localApiClient.createComment(comment)
+                    const data = await supabaseApiClient.createComment(comment)
                     const createdComment = data && data.length > 0 ? data[0] : null
                     if (!createdComment) throw new Error('Failed to create comment')
 
@@ -659,7 +659,7 @@ export const useAppStore = create<AppState>()(
             updateComment: async (id, comment) => {
                 try {
                     set({ isLoading: true, error: null })
-                    // For comments we would need to add an updateComment method to localApiClient
+                    // For comments we would need to add an updateComment method to supabaseApiClient
                     // For now, just update the state directly since comment updates are rare
                     const comments = get().comments
                     set({
@@ -675,7 +675,7 @@ export const useAppStore = create<AppState>()(
             deleteComment: async (id) => {
                 try {
                     set({ isLoading: true, error: null })
-                    await localApiClient.deleteComment(id)
+                    await supabaseApiClient.deleteComment(id)
 
                     const comments = get().comments
                     set({

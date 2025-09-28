@@ -20,8 +20,10 @@ This document serves as a comprehensive reference for implementing the Task Trac
 ## **🏗️ Architecture**
 
 ### **Tech Stack**
-- **Frontend**: Next.js 14+ (App Router) + TypeScript
-- **Database**: Supabase (PostgreSQL)
+- **Frontend**: Next.js 15 (App Router) + TypeScript
+- **Backend**: Supabase (PostgreSQL + Authentication + API)
+- **Database**: Supabase PostgreSQL with Row Level Security
+- **Authentication**: Supabase Auth (email/password)
 - **Styling**: TailwindCSS + shadcn/ui components
 - **State Management**: Zustand
 - **Drag & Drop**: @dnd-kit/core + @dnd-kit/sortable
@@ -75,9 +77,19 @@ This document serves as a comprehensive reference for implementing the Task Trac
 
 ## **📊 Database Schema**
 
+### **users** (managed by Supabase Auth)
+```sql
+id          UUID PRIMARY KEY REFERENCES auth.users(id)
+email       TEXT NOT NULL
+name        TEXT NOT NULL
+created_at  TIMESTAMPTZ DEFAULT now()
+updated_at  TIMESTAMPTZ DEFAULT now()
+```
+
 ### **projects**
 ```sql
 id          UUID PRIMARY KEY DEFAULT gen_random_uuid()
+user_id     UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE
 name        TEXT NOT NULL
 due_date    DATE
 owner       TEXT DEFAULT 'user'
@@ -129,11 +141,19 @@ created_at  TIMESTAMPTZ DEFAULT now()
 
 ## **🔧 Key Features & Functionality**
 
+### **Authentication**
+- ✅ User registration with email/password
+- ✅ Secure login with Supabase Auth
+- ✅ Automatic session management
+- ✅ Protected routes with middleware
+- ✅ User data isolation with Row Level Security
+
 ### **Projects Management**
 - ✅ CRUD operations (Create, Read, Update, Delete)
 - ✅ Archive/Unarchive (soft delete)
 - ✅ Status tracking (Active/Completed/Archived)
 - ✅ Due date support
+- ✅ User-specific project filtering
 
 ### **Tasks Management**
 - ✅ CRUD operations
@@ -176,16 +196,19 @@ src/
 │       ├── subtasks/      # Subtasks column components
 │       └── details/       # Details panel components
 ├── lib/
-│   ├── supabase/          # Supabase client & utilities
-│   │   ├── client.ts      # Supabase client setup
-│   │   └── types.ts       # Generated TypeScript types
+│   ├── supabase/          # Supabase client & configuration
+│   │   ├── client.ts      # Browser Supabase client
+│   │   ├── server.ts      # Server-side Supabase client
+│   │   ├── middleware.ts  # Auth middleware helper
+│   │   └── api-client.ts  # Database operations wrapper
+│   ├── hooks/             # Custom React hooks
+│   │   └── use-auth.ts    # Supabase auth integration
 │   ├── stores/            # Zustand stores
 │   │   └── app-store.ts   # Main application state
 │   └── utils.ts           # Utility functions
-├── types/                 # Custom TypeScript types
-│   └── database.ts        # Database type definitions
-└── hooks/                 # Custom React hooks
-    └── use-supabase.ts    # Supabase integration hooks
+├── types/                 # TypeScript types
+│   └── database.ts        # Generated database types
+└── middleware.ts          # Next.js auth middleware
 ```
 
 ---
@@ -214,14 +237,17 @@ src/
 
 ## **🎯 Success Criteria**
 
-- [ ] User can create and manage projects
-- [ ] Hierarchical navigation works smoothly (Project → Task → Subtask)
-- [ ] Drag-and-drop reordering is intuitive
-- [ ] Status updates reflect immediately
-- [ ] Comments system works for personal notes
-- [ ] Data persists correctly in Supabase
-- [ ] Real-time updates work across sessions
-- [ ] UI is responsive and polished
+- [x] User can register and login securely
+- [x] Authentication protects all routes
+- [x] User data is properly isolated
+- [x] User can create and manage projects
+- [x] Hierarchical navigation works smoothly (Project → Task → Subtask)
+- [x] Drag-and-drop reordering is intuitive
+- [x] Status updates reflect immediately
+- [x] Comments system works for personal notes
+- [x] Data persists correctly in Supabase
+- [ ] Real-time updates work across sessions (ready to implement)
+- [x] UI is responsive and polished
 
 ---
 

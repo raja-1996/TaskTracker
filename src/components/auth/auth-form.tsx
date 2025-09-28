@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { signIn } from "next-auth/react"
+import { supabase } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -30,22 +30,42 @@ export function AuthForm({ mode = "signin", onToggleMode }: AuthFormProps) {
         setError("")
 
         try {
-            const result = await signIn("credentials", {
-                email: formData.email,
-                password: formData.password,
-                name: formData.name,
-                action: mode,
-                redirect: false,
-            })
+            if (mode === "signup") {
+                const { data, error: signUpError } = await supabase.auth.signUp({
+                    email: formData.email,
+                    password: formData.password,
+                    options: {
+                        data: {
+                            name: formData.name,
+                        }
+                    }
+                })
 
-            if (result?.error) {
-                setError("Invalid credentials")
-            } else if (result?.ok) {
-                router.push("/")
-                router.refresh()
+                if (signUpError) {
+                    setError(signUpError.message)
+                } else if (data.user) {
+                    // User data will be automatically inserted by database trigger
+                    console.log('User created successfully:', data.user.email)
+                    // Force a page refresh to update the session on the server
+                    window.location.href = "/"
+                }
+            } else {
+                const { data, error: signInError } = await supabase.auth.signInWithPassword({
+                    email: formData.email,
+                    password: formData.password,
+                })
+
+                if (signInError) {
+                    setError(signInError.message)
+                } else if (data.user && data.session) {
+                    console.log('User signed in successfully:', data.user.email)
+                    // Force a page refresh to update the session on the server
+                    window.location.href = "/"
+                }
             }
         } catch (error) {
             setError("Something went wrong")
+            console.error('Auth error:', error)
         } finally {
             setIsLoading(false)
         }
