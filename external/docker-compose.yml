@@ -6,9 +6,9 @@ services:
     image: postgres:17-alpine
     container_name: tasktracker-db
     environment:
-      POSTGRES_DB: tasktracker
-      POSTGRES_USER: tasktracker_user
-      POSTGRES_PASSWORD: tasktracker_password
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_PORT: 5432
     ports:
       - "5432:5432"
@@ -16,7 +16,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U tasktracker_user -d tasktracker"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -27,12 +27,12 @@ services:
     image: postgrest/postgrest:v12.2.0
     container_name: tasktracker-api
     environment:
-      PGRST_DB_URI: postgres://tasktracker_user:tasktracker_password@postgres:5432/tasktracker
+      PGRST_DB_URI: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       PGRST_DB_SCHEMAS: public
-      PGRST_DB_ANON_ROLE: tasktracker_user
+      PGRST_DB_ANON_ROLE: ${POSTGRES_USER}
       PGRST_DB_ROOT_SPEC: root
       PGRST_OPENAPI_MODE: ignore-privileges
-      PGRST_JWT_SECRET: local-development-jwt-secret-key-for-tasktracker-app
+      PGRST_JWT_SECRET: ${PGRST_JWT_SECRET}
     ports:
       - "3003:3000"
     depends_on:
@@ -45,8 +45,8 @@ services:
     image: dpage/pgadmin4:latest
     container_name: tasktracker-admin
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@tasktracker.local
-      PGADMIN_DEFAULT_PASSWORD: admin_password
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
       PGADMIN_CONFIG_SERVER_MODE: "False"
     ports:
       - "8080:80"

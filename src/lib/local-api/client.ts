@@ -12,11 +12,18 @@ type Comment = Database['public']['Tables']['comments']['Row']
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003'
 
 class LocalApiClient {
+    private userId: string | null = null
+
+    setUserId(userId: string | null) {
+        this.userId = userId
+    }
+
     private async request<T>(endpoint: string, options?: RequestInit): Promise<T[]> {
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
             ...options,
             headers: {
                 'Content-Type': 'application/json',
+                'X-User-ID': this.userId || '',
                 ...options?.headers,
             },
         })
@@ -56,7 +63,8 @@ class LocalApiClient {
 
     // Projects
     async getProjects(): Promise<Project[]> {
-        return this.request<Project>('/projects?order=created_at.desc')
+        if (!this.userId) throw new Error('User not authenticated')
+        return this.request<Project>(`/projects?user_id=eq.${this.userId}&order=created_at.desc`)
     }
 
     async createProject(project: Omit<Project, 'id' | 'created_at' | 'updated_at'>): Promise<Project[]> {

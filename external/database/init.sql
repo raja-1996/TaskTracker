@@ -4,9 +4,56 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- Create users table
+CREATE TABLE IF NOT EXISTS users (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    name TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Create accounts table for NextAuth
+CREATE TABLE IF NOT EXISTS accounts (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "userId" UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    type TEXT NOT NULL,
+    provider TEXT NOT NULL,
+    "providerAccountId" TEXT NOT NULL,
+    refresh_token TEXT,
+    access_token TEXT,
+    expires_at BIGINT,
+    token_type TEXT,
+    scope TEXT,
+    id_token TEXT,
+    session_state TEXT,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Create sessions table for NextAuth
+CREATE TABLE IF NOT EXISTS sessions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "sessionToken" TEXT NOT NULL UNIQUE,
+    "userId" UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    expires TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Create verification tokens table for NextAuth
+CREATE TABLE IF NOT EXISTS verification_tokens (
+    token TEXT NOT NULL,
+    identifier TEXT NOT NULL,
+    expires TIMESTAMPTZ NOT NULL,
+    PRIMARY KEY (identifier, token)
+);
+
 -- Create projects table
 CREATE TABLE IF NOT EXISTS projects (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     due_date DATE,
     owner TEXT DEFAULT 'user',
@@ -72,6 +119,12 @@ CREATE TABLE IF NOT EXISTS comments (
 );
 
 -- Create indexes for performance
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_accounts_user_id ON accounts("userId");
+CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions("userId");
+CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions("sessionToken");
+
+CREATE INDEX IF NOT EXISTS idx_projects_user_id ON projects(user_id);
 CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status);
 CREATE INDEX IF NOT EXISTS idx_projects_archived ON projects(archived);
 CREATE INDEX IF NOT EXISTS idx_projects_created_at ON projects(created_at DESC);
@@ -101,10 +154,14 @@ CREATE INDEX IF NOT EXISTS idx_comments_entity_type_id ON comments(entity_type, 
 CREATE INDEX IF NOT EXISTS idx_comments_created_at ON comments(created_at ASC);
 
 -- Insert sample data
-INSERT INTO projects (id, name, due_date, status, archived) VALUES 
-('550e8400-e29b-41d4-a716-446655440000', 'Task Tracker Development', '2025-12-31', 'Active', false),
-('550e8400-e29b-41d4-a716-446655440001', 'Mobile App Project', '2025-10-15', 'Active', false),
-('550e8400-e29b-41d4-a716-446655440002', 'Legacy System Migration', '2025-06-30', 'Completed', true);
+-- First create a demo user (password: demo123)
+INSERT INTO users (id, email, password_hash, name) VALUES 
+('450e8400-e29b-41d4-a716-446655440000', 'demo@tasktracker.local', '$2b$12$pKtpS0l2mY0YjY9Mq0cacOhqJ3JUJ2/PkPwhbgsm7.Nj6jdlsAYe6', 'Demo User');
+
+INSERT INTO projects (id, user_id, name, due_date, status, archived) VALUES 
+('550e8400-e29b-41d4-a716-446655440000', '450e8400-e29b-41d4-a716-446655440000', 'Task Tracker Development', '2025-12-31', 'Active', false),
+('550e8400-e29b-41d4-a716-446655440001', '450e8400-e29b-41d4-a716-446655440000', 'Mobile App Project', '2025-10-15', 'Active', false),
+('550e8400-e29b-41d4-a716-446655440002', '450e8400-e29b-41d4-a716-446655440000', 'Legacy System Migration', '2025-06-30', 'Completed', true);
 
 -- Insert sample tasks
 INSERT INTO tasks (id, project_id, name, status, order_index) VALUES 
@@ -165,6 +222,9 @@ END;
 $$ language 'plpgsql';
 
 -- Create triggers to automatically update updated_at
+CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_accounts_updated_at BEFORE UPDATE ON accounts FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_sessions_updated_at BEFORE UPDATE ON sessions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_projects_updated_at BEFORE UPDATE ON projects FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_tasks_updated_at BEFORE UPDATE ON tasks FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_subtasks_updated_at BEFORE UPDATE ON subtasks FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

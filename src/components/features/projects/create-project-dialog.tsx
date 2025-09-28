@@ -53,7 +53,7 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
         try {
             setIsSubmitting(true);
 
-            const projectData: ProjectInsert = {
+            const projectData: Omit<ProjectInsert, 'user_id'> = {
                 name: data.name,
                 due_date: data.due_date || null,
                 status: 'Active',

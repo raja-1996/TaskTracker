@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useAppStore } from "@/lib/stores/app-store";
 import { ProjectsSidebar } from "@/components/features/projects/projects-sidebar";
 import { TasksColumn } from "@/components/features/tasks/tasks-column";
@@ -8,13 +10,38 @@ import { SubtasksColumn } from "@/components/features/subtasks/subtasks-column";
 import { DetailsPanel } from "@/components/features/details/details-panel";
 import { ErrorBanner } from "@/components/ui/error-banner";
 import { ResizableLayout } from "@/components/ui/resizable-layout";
+import { UserHeader } from "@/components/auth/user-header";
 
 export default function Home() {
-  const { loadProjects, error, clearError, isLoading } = useAppStore();
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const { loadProjects, error, clearError, isLoading, setUserId } = useAppStore();
 
   useEffect(() => {
-    loadProjects();
-  }, [loadProjects]);
+    if (status === "loading") return; // Still loading
+
+    if (status === "unauthenticated") {
+      router.push("/auth/signin");
+      return;
+    }
+
+    if (status === "authenticated" && session?.user?.id) {
+      setUserId(session.user.id);
+      loadProjects();
+    }
+  }, [status, loadProjects, router]);
+
+  if (status === "loading") {
+    return (
+      <div className="h-screen bg-background flex items-center justify-center">
+        <div className="text-lg text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
+  if (status === "unauthenticated") {
+    return null; // Will redirect
+  }
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
@@ -29,9 +56,12 @@ export default function Home() {
             <h1 className="text-2xl font-bold text-foreground">Task Tracker</h1>
             <p className="text-sm text-muted-foreground">Personal Project Management</p>
           </div>
-          {isLoading && (
-            <div className="text-sm text-muted-foreground">Loading...</div>
-          )}
+          <div className="flex items-center space-x-4">
+            {isLoading && (
+              <div className="text-sm text-muted-foreground">Loading...</div>
+            )}
+            <UserHeader user={session?.user} />
+          </div>
         </div>
       </header>
 

@@ -5,8 +5,12 @@ This folder contains the external services (PostgreSQL, PostgREST) needed for lo
 ## 🚀 Quick Start
 
 ```bash
-# Start local development services
+# First, set up environment variables
 cd external
+cp .env.example .env
+# Edit .env with your secure values
+
+# Start local development services
 docker-compose up -d
 
 # Check if services are running
@@ -24,10 +28,26 @@ docker-compose logs
 
 ## 🔧 Configuration
 
-The services use these default credentials:
-- **Database**: tasktracker
-- **User**: tasktracker_user  
-- **Password**: tasktracker_password
+### 🔒 Required Configuration
+You **must** create a `.env` file with all required environment variables:
+
+```bash
+# Copy the example file
+cp .env.example .env
+
+# Edit with your secure values
+nano .env
+```
+
+**Example `.env` file**:
+```bash
+POSTGRES_DB=tasktracker
+POSTGRES_USER=your_secure_user
+POSTGRES_PASSWORD=your-very-secure-password-here
+PGRST_JWT_SECRET=your-jwt-secret-at-least-32-characters-long
+PGADMIN_DEFAULT_EMAIL=your-email@domain.com
+PGADMIN_DEFAULT_PASSWORD=secure-admin-password
+```
 
 ## 🛑 Stopping Services
 
@@ -43,7 +63,9 @@ docker-compose down -v
 
 Once running, your Next.js app will connect to:
 - **API URL**: http://localhost:3003
-- **Database**: postgresql://tasktracker_user:tasktracker_password@localhost:5432/tasktracker
+- **Database**: postgresql://[YOUR_POSTGRES_USER]:[YOUR_POSTGRES_PASSWORD]@localhost:5432/[YOUR_POSTGRES_DB]
+
+Replace the bracketed values with what you set in your `.env` file.
 
 ## 📁 Files
 

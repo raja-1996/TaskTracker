@@ -38,7 +38,11 @@ interface AppState {
     isLoading: boolean
     error: string | null
 
+    // User state
+    userId: string | null
+
     // Actions
+    setUserId: (userId: string | null) => void
     setSelectedProject: (projectId: string | null) => void
     setSelectedTask: (taskId: string | null) => void
     setSelectedSubtask: (subtaskId: string | null) => void
@@ -47,7 +51,7 @@ interface AppState {
 
     // Project actions
     loadProjects: () => Promise<void>
-    createProject: (project: ProjectInsert) => Promise<void>
+    createProject: (project: Omit<ProjectInsert, 'user_id'>) => Promise<void>
     updateProject: (id: string, project: Partial<Project>) => Promise<void>
     deleteProject: (id: string) => Promise<void>
     archiveProject: (id: string, archived: boolean) => Promise<void>
@@ -109,6 +113,13 @@ export const useAppStore = create<AppState>()(
             showArchived: false,
             isLoading: false,
             error: null,
+            userId: null,
+
+            // Auth Actions
+            setUserId: (userId) => {
+                set({ userId })
+                localApiClient.setUserId(userId)
+            },
 
             // UI Actions
             setSelectedProject: async (projectId) => {
@@ -222,10 +233,14 @@ export const useAppStore = create<AppState>()(
 
             createProject: async (project) => {
                 try {
+                    const { userId } = get()
+                    if (!userId) throw new Error('User not authenticated')
+
                     set({ isLoading: true, error: null })
-                    // Ensure optional properties are null instead of undefined
+                    // Ensure optional properties are null instead of undefined and include user_id
                     const sanitizedProject = {
                         ...project,
+                        user_id: userId,
                         status: project.status ?? null,
                         archived: project.archived ?? null,
                         due_date: project.due_date ?? null,
