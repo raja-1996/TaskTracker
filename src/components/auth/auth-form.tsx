@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { supabase } from "@/lib/supabase/client"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -16,7 +15,6 @@ interface AuthFormProps {
 export function AuthForm({ mode = "signin", onToggleMode }: AuthFormProps) {
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState("")
-    const router = useRouter()
 
     const [formData, setFormData] = useState({
         email: "",

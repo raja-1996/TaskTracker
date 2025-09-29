@@ -120,14 +120,16 @@ export async function POST(request: NextRequest) {
         const generatedSubtasks = await llmService.generateSubtasks({
             projectTitle: task.projects.name,
             projectDescription: projectDetails?.description || undefined,
-            projectComments: projectComments?.map((c: any) => c.content).join('\n') || '',
+            projectComments: projectComments?.map((c) => c.content).join('\n') || '',
             taskTitle: task.name,
             taskDescription: Array.isArray(task.task_details) ? task.task_details[0]?.description : undefined,
-            taskComments: taskComments?.map((c: any) => c.content).join('\n'),
-            existingSubtasks: allExistingSubtasks?.map((s: any) => ({
+            taskComments: taskComments?.map((c) => c.content).join('\n'),
+            existingSubtasks: allExistingSubtasks?.map((s) => ({
                 title: s.name,
-                description: s.subtask_details?.[0]?.description,
-                source: s.source_type
+                description: Array.isArray(s.subtask_details) && s.subtask_details.length > 0
+                    ? s.subtask_details[0]?.description
+                    : undefined,
+                source: s.source_type || undefined
             }))
         })
 

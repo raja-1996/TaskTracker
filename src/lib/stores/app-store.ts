@@ -89,8 +89,8 @@ interface AppState {
     deleteComment: (id: string) => Promise<void>
 
     // AI Generation actions
-    generateAITasks: (projectId: string, refresh?: boolean) => Promise<any>
-    generateAISubtasks: (taskId: string, refresh?: boolean) => Promise<any>
+    generateAITasks: (projectId: string, refresh?: boolean) => Promise<{ tasks: Task[], appended: boolean }>
+    generateAISubtasks: (taskId: string, refresh?: boolean) => Promise<{ subtasks: Subtask[], appended: boolean }>
 
     // Utility actions
     setLoading: (loading: boolean) => void
@@ -365,10 +365,11 @@ export const useAppStore = create<AppState>()(
             createTask: async (task) => {
                 try {
                     set({ isLoading: true, error: null })
-                    // Ensure status is null instead of undefined
+                    // Ensure optional properties are null instead of undefined
                     const sanitizedTask = {
                         ...task,
-                        status: task.status ?? null
+                        status: task.status ?? null,
+                        source_type: task.source_type ?? null
                     }
                     const data = await supabaseApiClient.createTask(sanitizedTask)
                     const createdTask = data && data.length > 0 ? data[0] : null
@@ -505,10 +506,11 @@ export const useAppStore = create<AppState>()(
             createSubtask: async (subtask) => {
                 try {
                     set({ isLoading: true, error: null })
-                    // Ensure status is null instead of undefined
+                    // Ensure optional properties are null instead of undefined
                     const sanitizedSubtask = {
                         ...subtask,
-                        status: subtask.status ?? null
+                        status: subtask.status ?? null,
+                        source_type: subtask.source_type ?? null
                     }
                     const data = await supabaseApiClient.createSubtask(sanitizedSubtask)
                     const createdSubtask = data && data.length > 0 ? data[0] : null

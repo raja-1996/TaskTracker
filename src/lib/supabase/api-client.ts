@@ -316,7 +316,7 @@ class SupabaseApiClient {
     }
 
     // AI Generation methods
-    async generateTasks(projectId: string, refresh: boolean = false): Promise<{ tasks: any[], cached: boolean }> {
+    async generateTasks(projectId: string, refresh: boolean = false): Promise<{ tasks: Task[], appended: boolean }> {
         const response = await fetch('/api/ai/generate-tasks', {
             method: 'POST',
             headers: {
@@ -332,7 +332,7 @@ class SupabaseApiClient {
         return response.json()
     }
 
-    async generateSubtasks(taskId: string, refresh: boolean = false): Promise<{ subtasks: any[], cached: boolean }> {
+    async generateSubtasks(taskId: string, refresh: boolean = false): Promise<{ subtasks: Subtask[], appended: boolean }> {
         const response = await fetch('/api/ai/generate-subtasks', {
             method: 'POST',
             headers: {
