@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useAppStore } from "@/lib/stores/app-store";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { InlineEdit } from "@/components/ui/inline-edit";
 import {
     MoreHorizontal,
     Edit,
@@ -40,6 +41,7 @@ const statusConfig = {
 export function ProjectItem({ project, isSelected, onSelect }: ProjectItemProps) {
     const { updateProject, deleteProject, archiveProject } = useAppStore();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
 
     const handleArchiveToggle = async (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -58,6 +60,16 @@ export function ProjectItem({ project, isSelected, onSelect }: ProjectItemProps)
         setIsMenuOpen(false);
     };
 
+    const handleNameSave = async (newName: string) => {
+        await updateProject(project.id, { name: newName });
+        setIsEditing(false);
+    };
+
+    const handleEditClick = () => {
+        setIsEditing(true);
+        setIsMenuOpen(false);
+    };
+
     const currentStatus = (project.status as ProjectStatus) || 'Active';
     const StatusIcon = statusConfig[currentStatus].icon;
     const isOverdue = project.due_date && new Date(project.due_date) < new Date() && currentStatus !== 'Completed';
@@ -67,16 +79,28 @@ export function ProjectItem({ project, isSelected, onSelect }: ProjectItemProps)
             className={cn(
                 "p-3 cursor-pointer transition-all hover:shadow-sm border",
                 isSelected ? "ring-2 ring-ring border-ring" : "hover:border-border",
-                project.archived && "opacity-60"
+                project.archived && "opacity-60",
+                isEditing && "cursor-default"
             )}
-            onClick={onSelect}
+            onClick={isEditing ? undefined : onSelect}
         >
             <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
                     {/* Status and Title */}
                     <div className="flex items-center gap-2 mb-1">
                         <StatusIcon className={cn("h-4 w-4", statusConfig[currentStatus].color)} />
-                        <h3 className="font-medium text-sm truncate">{project.name}</h3>
+                        {isEditing ? (
+                            <InlineEdit
+                                value={project.name}
+                                onSave={handleNameSave}
+                                onCancel={() => setIsEditing(false)}
+                                placeholder="Project name..."
+                                className="flex-1"
+                                inputClassName="text-sm font-medium"
+                            />
+                        ) : (
+                            <h3 className="font-medium text-sm truncate">{project.name}</h3>
+                        )}
                     </div>
 
                     {/* Due Date */}
@@ -104,9 +128,12 @@ export function ProjectItem({ project, isSelected, onSelect }: ProjectItemProps)
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-40">
-                        <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditClick();
+                        }}>
                             <Edit className="h-4 w-4 mr-2" />
-                            Edit
+                            Edit Name
                         </DropdownMenuItem>
 
                         <DropdownMenuSeparator />

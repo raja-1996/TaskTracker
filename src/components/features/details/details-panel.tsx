@@ -4,8 +4,8 @@ import React, { useState } from "react";
 import { useAppStore } from "@/lib/stores/app-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Send, MessageCircle, Edit3, Save, X } from "lucide-react";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { Send, MessageCircle, Save } from "lucide-react";
 import { format } from "date-fns";
 
 export function DetailsPanel() {
@@ -27,7 +27,6 @@ export function DetailsPanel() {
 
     const [description, setDescription] = useState("");
     const [newComment, setNewComment] = useState("");
-    const [isEditingDescription, setIsEditingDescription] = useState(false);
     const [isSavingDescription, setIsSavingDescription] = useState(false);
     const [isAddingComment, setIsAddingComment] = useState(false);
 
@@ -65,12 +64,13 @@ export function DetailsPanel() {
 
     // Update description when details change
     React.useEffect(() => {
+        console.log('Details changed for entity:', selectedEntityType, selectedEntityId, currentDetails);
         if (currentDetails) {
             setDescription(currentDetails.description || "");
         } else {
             setDescription("");
         }
-    }, [currentDetails]);
+    }, [currentDetails, selectedEntityType, selectedEntityId]);
 
     const handleSaveDescription = async () => {
         if (!selectedEntityType || !selectedEntityId) return;
@@ -89,8 +89,6 @@ export function DetailsPanel() {
                     await updateSubtaskDescription(selectedEntityId, description);
                     break;
             }
-
-            setIsEditingDescription(false);
         } catch (error) {
             console.error("Failed to save description:", error);
         } finally {
@@ -98,10 +96,6 @@ export function DetailsPanel() {
         }
     };
 
-    const handleCancelDescription = () => {
-        setDescription(currentDetails?.description || "");
-        setIsEditingDescription(false);
-    };
 
     const handleAddComment = async () => {
         if (!selectedEntityType || !selectedEntityId || !newComment.trim()) return;
@@ -167,63 +161,27 @@ export function DetailsPanel() {
             </div>
 
             <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4">
-                {/* Inline Description Section */}
+                {/* Description Section */}
                 <div className="space-y-2">
                     <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">Description</span>
-                        {!isEditingDescription && (
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setIsEditingDescription(true)}
-                                className="h-6 px-2 text-xs"
-                            >
-                                <Edit3 className="h-3 w-3 mr-1" />
-                                Edit
-                            </Button>
-                        )}
+                        <Button
+                            onClick={handleSaveDescription}
+                            disabled={isSavingDescription || (currentDetails?.description || "") === description}
+                            size="sm"
+                            className="h-6 px-2 text-xs"
+                        >
+                            <Save className="h-3 w-3 mr-1" />
+                            {isSavingDescription ? "Saving..." : "Save"}
+                        </Button>
                     </div>
 
-                    {isEditingDescription ? (
-                        <div className="space-y-2">
-                            <Textarea
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                                placeholder="Add a detailed description..."
-                                className="min-h-[80px] resize-y"
-                                autoFocus
-                            />
-                            <div className="flex gap-2 justify-end">
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={handleCancelDescription}
-                                    disabled={isSavingDescription}
-                                    className="h-6 px-2 text-xs"
-                                >
-                                    <X className="h-3 w-3 mr-1" />
-                                    Cancel
-                                </Button>
-                                <Button
-                                    onClick={handleSaveDescription}
-                                    disabled={isSavingDescription || (currentDetails?.description || "") === description}
-                                    size="sm"
-                                    className="h-6 px-2 text-xs"
-                                >
-                                    <Save className="h-3 w-3 mr-1" />
-                                    {isSavingDescription ? "Saving..." : "Save"}
-                                </Button>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="min-h-[40px] p-2 border rounded text-sm bg-muted/30">
-                            {description || (
-                                <span className="text-muted-foreground italic">
-                                    Click Edit to add a description...
-                                </span>
-                            )}
-                        </div>
-                    )}
+                    <RichTextEditor
+                        value={description}
+                        onChange={setDescription}
+                        placeholder="Add a detailed description..."
+                        className="min-h-[80px]"
+                    />
                 </div>
 
                 {/* Compact Comments Section */}

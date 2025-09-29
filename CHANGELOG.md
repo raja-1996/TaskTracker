@@ -7,13 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - 2025-09-29
 
+### Added
+- **Always-Editable Descriptions**: Description sections are now always in edit mode with save button
+- Created reusable `RichTextEditor` component with enhanced textarea styling
+- **Drag and Drop Reordering**: Added drag and drop functionality for tasks and subtasks
+- Users can now drag tasks up and down within the tasks column to reorder them
+- Users can now drag subtasks up and down within the subtasks column to reorder them
+- Visual drag handles (grip vertical icon) for easy identification of draggable items
+- Smooth drag animations with opacity changes during dragging
+- Automatic order persistence - reordered items maintain their position across sessions
+- Keyboard accessibility support for drag and drop operations
+- Immediate UI updates - reordered items reflect changes instantly without page refresh
+
 ### Fixed
+- **Subtask Description Issue**: Fixed subtasks displaying the same description across different subtasks
+- Improved state management to properly clear and reload subtask details when switching between subtasks
+- Enhanced entity selection flow with immediate state clearing to prevent stale data display
+- Added debugging logs to track subtask details loading and updating process
+- **Rich Text Editor Display Issue**: Fixed character-by-character display bug in description editor
+- Replaced complex Lexical editor with simple, styled textarea for better reliability
+- Description text now displays properly as continuous text instead of separated characters
+- **Drag and Drop UI Update**: Fixed issue where drag and drop reordering only worked after page refresh
+- Drag operations now update the UI immediately with correct visual order
+- **CRITICAL Drag and Drop Persistence Fix**: Fixed order_index corruption when reordering with active search filters
+- Drag and drop changes now properly persist to database and maintain correct ordering after page refresh
+- Reordering is temporarily disabled while search filters are active to prevent order corruption
+- Fixed order_index calculation to update all items based on their new positions in the complete array
 - **CRITICAL**: Fixed production deployment failing due to TypeScript/ESLint errors
 - Replaced all `any` types with proper TypeScript types in API routes and store files
 - Fixed unused variable warnings in authentication components
 - Ensured proper type safety for Supabase database operations and AI generation APIs
 
 ### Changed
+- **Description Editing UX**: Removed toggle-based editing in favor of always-visible editor
+- Descriptions are now permanently editable with dedicated save button instead of edit/cancel toggle
+- Simplified description editor with enhanced textarea styling for better user experience
+- Removed `isEditingDescription` state and related toggle logic from details panel
 - **AI Generation Behavior**: Modified AI task and subtask generation to use append mode instead of replacement
 - AI-generated items are now appended to existing ones when clicking "AI Tasks" or "AI Subtasks" buttons
 - "Refresh AI Tasks/Subtasks" option still replaces existing AI items (only available through dropdown menu)

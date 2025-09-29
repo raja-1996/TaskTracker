@@ -192,13 +192,20 @@ export const useAppStore = create<AppState>()(
             },
 
             setSelectedEntity: async (entityType, entityId) => {
+                // First, immediately clear all states to prevent stale data
                 set({
-                    selectedEntityType: entityType,
-                    selectedEntityId: entityId,
+                    selectedEntityType: null,
+                    selectedEntityId: null,
                     projectDetails: null,
                     taskDetails: null,
                     subtaskDetails: null,
                     comments: []
+                })
+
+                // Then set the new selection
+                set({
+                    selectedEntityType: entityType,
+                    selectedEntityId: entityId
                 })
 
                 // Load appropriate details and comments based on entity type
@@ -595,10 +602,18 @@ export const useAppStore = create<AppState>()(
             loadSubtaskDetails: async (subtaskId) => {
                 try {
                     set({ isLoading: true, error: null })
+                    console.log('Loading subtask details for:', subtaskId)
+
+                    // Ensure we clear any existing details first
+                    set({ subtaskDetails: null })
+
                     const data = await supabaseApiClient.getSubtaskDetails(subtaskId)
                     const details = data && data.length > 0 ? data[0] : null
+
+                    console.log('Loaded subtask details:', details)
                     set({ subtaskDetails: details })
                 } catch (error) {
+                    console.error('Error loading subtask details:', error)
                     set({ error: (error as Error).message })
                 } finally {
                     set({ isLoading: false })
@@ -608,6 +623,7 @@ export const useAppStore = create<AppState>()(
             updateSubtaskDescription: async (subtaskId, description) => {
                 try {
                     set({ isLoading: true, error: null })
+                    console.log('Updating subtask description for:', subtaskId, 'with:', description)
 
                     // First try to update existing record
                     let data = await supabaseApiClient.updateSubtaskDetails(subtaskId, {
@@ -618,6 +634,7 @@ export const useAppStore = create<AppState>()(
 
                     // If no record was updated, create a new one
                     if (!data || data.length === 0) {
+                        console.log('No existing record found, creating new subtask details')
                         data = await supabaseApiClient.createSubtaskDetails({
                             subtask_id: subtaskId,
                             description,
@@ -625,8 +642,10 @@ export const useAppStore = create<AppState>()(
                     }
 
                     const details = data && data.length > 0 ? data[0] : null
+                    console.log('Updated subtask details:', details)
                     set({ subtaskDetails: details })
                 } catch (error) {
+                    console.error('Error updating subtask description:', error)
                     set({ error: (error as Error).message })
                 } finally {
                     set({ isLoading: false })
