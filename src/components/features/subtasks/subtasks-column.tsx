@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useAppStore } from "@/lib/stores/app-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, MoreHorizontal, CheckCircle2, Clock, PlayCircle, Trash2 } from "lucide-react";
+import { Plus, Search, MoreHorizontal, CheckCircle2, Clock, PlayCircle, Trash2, RefreshCw, Bot, User } from "lucide-react";
 import { CreateSubtaskDialog } from "./create-subtask-dialog";
 import {
     DropdownMenu,
@@ -24,16 +24,25 @@ export function SubtasksColumn() {
         tasks,
         updateSubtask,
         deleteSubtask,
+        generateAISubtasks,
     } = useAppStore();
 
     const [searchQuery, setSearchQuery] = useState("");
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+    const [isGeneratingSubtasks, setIsGeneratingSubtasks] = useState(false);
 
     const selectedTask = tasks.find(t => t.id === selectedTaskId);
 
-    const filteredSubtasks = subtasks.filter(subtask =>
-        subtask.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    // Sort subtasks: user subtasks first, then AI subtasks, filtered by search
+    const filteredSubtasks = subtasks
+        .filter(subtask => subtask.name.toLowerCase().includes(searchQuery.toLowerCase()))
+        .sort((a, b) => {
+            // User subtasks come first, then AI subtasks
+            if (a.source_type === 'user' && b.source_type === 'ai') return -1;
+            if (a.source_type === 'ai' && b.source_type === 'user') return 1;
+            // Within same source type, sort by order_index
+            return a.order_index - b.order_index;
+        });
 
     const handleStatusChange = async (subtaskId: string, status: SubtaskStatus) => {
         await updateSubtask(subtaskId, { status });
@@ -42,6 +51,19 @@ export function SubtasksColumn() {
     const handleDeleteSubtask = async (subtaskId: string, subtaskName: string) => {
         if (confirm(`Are you sure you want to delete "${subtaskName}"?`)) {
             await deleteSubtask(subtaskId);
+        }
+    };
+
+    const handleGenerateAISubtasks = async (refresh: boolean = false) => {
+        if (!selectedTaskId || isGeneratingSubtasks) return;
+
+        setIsGeneratingSubtasks(true);
+        try {
+            await generateAISubtasks(selectedTaskId, refresh);
+        } catch (error) {
+            console.error('Failed to generate AI subtasks:', error);
+        } finally {
+            setIsGeneratingSubtasks(false);
         }
     };
 
@@ -56,15 +78,31 @@ export function SubtasksColumn() {
                             <p className="text-sm text-muted-foreground">{selectedTask.name}</p>
                         )}
                     </div>
-                    <Button
-                        size="sm"
-                        disabled={!selectedTaskId}
-                        className="gap-2"
-                        onClick={() => setIsCreateDialogOpen(true)}
-                    >
-                        <Plus className="h-4 w-4" />
-                        Add Subtask
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={!selectedTaskId || isGeneratingSubtasks}
+                            className="gap-2"
+                            onClick={() => handleGenerateAISubtasks()}
+                        >
+                            {isGeneratingSubtasks ? (
+                                <RefreshCw className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <Bot className="h-4 w-4" />
+                            )}
+                            {isGeneratingSubtasks ? 'Generating...' : 'AI Subtasks'}
+                        </Button>
+                        <Button
+                            size="sm"
+                            disabled={!selectedTaskId}
+                            className="gap-2"
+                            onClick={() => setIsCreateDialogOpen(true)}
+                        >
+                            <Plus className="h-4 w-4" />
+                            Add Subtask
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="relative">
@@ -106,7 +144,14 @@ export function SubtasksColumn() {
                             >
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2 flex-1">
-                                        <h3 className="font-medium text-sm">{subtask.name}</h3>
+                                        <div className="flex items-center gap-1">
+                                            {subtask.source_type === 'ai' ? (
+                                                <Bot className="h-3 w-3 text-blue-500" />
+                                            ) : (
+                                                <User className="h-3 w-3 text-green-500" />
+                                            )}
+                                            <h3 className="font-medium text-sm">{subtask.name}</h3>
+                                        </div>
                                         <span className={`px-2 py-1 rounded-full text-xs ${subtask.status === 'Done'
                                             ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
                                             : subtask.status === 'In Progress'
@@ -128,6 +173,18 @@ export function SubtasksColumn() {
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end" className="w-40">
+                                            {subtask.source_type === 'ai' && (
+                                                <>
+                                                    <DropdownMenuItem onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleGenerateAISubtasks(true);
+                                                    }} disabled={isGeneratingSubtasks}>
+                                                        <RefreshCw className="h-4 w-4 mr-2" />
+                                                        Refresh AI Subtasks
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuSeparator />
+                                                </>
+                                            )}
                                             {subtask.status !== 'To-Do' && (
                                                 <DropdownMenuItem onClick={(e) => {
                                                     e.stopPropagation();

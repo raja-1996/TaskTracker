@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - 2025-09-29
+
+### Changed
+- **AI Generation Behavior**: Modified AI task and subtask generation to use append mode instead of replacement
+- AI-generated items are now appended to existing ones when clicking "AI Tasks" or "AI Subtasks" buttons
+- "Refresh AI Tasks/Subtasks" option still replaces existing AI items (only available through dropdown menu)
+- Removed caching behavior that prevented new AI generations when items already existed
+- **Anti-Duplication System**: Enhanced AI prompts to prevent duplicate task/subtask generation
+- LLM now receives complete context of ALL existing items (both user-created and AI-generated)
+- Improved prompts with explicit uniqueness requirements and creative diversity strategies
+- Added source labels ([USER]/[AI]) in LLM context for better differentiation
+
+### Added
+- AI-powered task and subtask generation using Google Gemini LLM
+- LangChain integration for structured AI prompts and responses
+- Context-aware task generation considering project details and existing content
+- Visual indicators to distinguish between user-created and AI-generated items
+- Refresh functionality for regenerating AI suggestions
+- Smart ordering: user items displayed before AI-generated items
+- New database tables and columns for tracking AI generations and source types
+- Comprehensive API endpoints for AI task and subtask generation
+- Environment configuration for Google AI API integration
+
+### Changed  
+- Updated database schema with `source_type` column for tasks and subtasks
+- Enhanced UI components with AI generation buttons and indicators
+- Modified task and subtask columns to show proper source-based ordering
+- Updated TypeScript types to include AI-related fields
+- Expanded API client with AI generation methods
+
+### Fixed
+- Proper error handling for AI generation failures
+- Loading states during AI content generation
+- Database constraints and indexes for AI-related tables
+
 ## [Unreleased] - 2025-09-28
 
 ### Added

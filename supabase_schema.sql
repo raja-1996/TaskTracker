@@ -1,5 +1,5 @@
 -- Task Tracker Database Schema for Supabase
--- Version 1.1.0 - Updated 2025-09-28
+-- Version 1.1.0 - Base Schema - Updated 2025-09-28
 -- 
 -- INCLUDES AUTHENTICATION FIXES:
 -- - Fixed trigger function with SECURITY DEFINER and proper error handling
@@ -83,6 +83,7 @@ CREATE TABLE IF NOT EXISTS comments (
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
+
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_projects_user_id ON projects(user_id);
 CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status);
@@ -105,6 +106,7 @@ CREATE INDEX IF NOT EXISTS idx_subtask_details_subtask_id ON subtask_details(sub
 
 CREATE INDEX IF NOT EXISTS idx_comments_entity_type_id ON comments(entity_type, entity_id);
 CREATE INDEX IF NOT EXISTS idx_comments_created_at ON comments(created_at ASC);
+
 
 -- Create function to automatically insert user data on signup
 CREATE OR REPLACE FUNCTION handle_new_user()

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useAppStore } from "@/lib/stores/app-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, MoreHorizontal, CheckCircle2, Clock, PlayCircle, Trash2 } from "lucide-react";
+import { Plus, Search, MoreHorizontal, CheckCircle2, Clock, PlayCircle, Trash2, RefreshCw, Bot, User } from "lucide-react";
 import { CreateTaskDialog } from "./create-task-dialog";
 import {
     DropdownMenu,
@@ -25,16 +25,25 @@ export function TasksColumn() {
         projects,
         updateTask,
         deleteTask,
+        generateAITasks,
     } = useAppStore();
 
     const [searchQuery, setSearchQuery] = useState("");
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+    const [isGeneratingTasks, setIsGeneratingTasks] = useState(false);
 
     const selectedProject = projects.find(p => p.id === selectedProjectId);
 
-    const filteredTasks = tasks.filter(task =>
-        task.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    // Sort tasks: user tasks first, then AI tasks, filtered by search
+    const filteredTasks = tasks
+        .filter(task => task.name.toLowerCase().includes(searchQuery.toLowerCase()))
+        .sort((a, b) => {
+            // User tasks come first, then AI tasks
+            if (a.source_type === 'user' && b.source_type === 'ai') return -1;
+            if (a.source_type === 'ai' && b.source_type === 'user') return 1;
+            // Within same source type, sort by order_index
+            return a.order_index - b.order_index;
+        });
 
     const handleStatusChange = async (taskId: string, status: TaskStatus) => {
         await updateTask(taskId, { status });
@@ -52,6 +61,19 @@ export function TasksColumn() {
         setSelectedEntity('task', taskId);
     };
 
+    const handleGenerateAITasks = async (refresh: boolean = false) => {
+        if (!selectedProjectId || isGeneratingTasks) return;
+
+        setIsGeneratingTasks(true);
+        try {
+            await generateAITasks(selectedProjectId, refresh);
+        } catch (error) {
+            console.error('Failed to generate AI tasks:', error);
+        } finally {
+            setIsGeneratingTasks(false);
+        }
+    };
+
     return (
         <div className="h-full flex flex-col">
             {/* Header */}
@@ -63,15 +85,31 @@ export function TasksColumn() {
                             <p className="text-sm text-muted-foreground">{selectedProject.name}</p>
                         )}
                     </div>
-                    <Button
-                        size="sm"
-                        disabled={!selectedProjectId}
-                        className="gap-2"
-                        onClick={() => setIsCreateDialogOpen(true)}
-                    >
-                        <Plus className="h-4 w-4" />
-                        Add Task
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={!selectedProjectId || isGeneratingTasks}
+                            className="gap-2"
+                            onClick={() => handleGenerateAITasks()}
+                        >
+                            {isGeneratingTasks ? (
+                                <RefreshCw className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <Bot className="h-4 w-4" />
+                            )}
+                            {isGeneratingTasks ? 'Generating...' : 'AI Tasks'}
+                        </Button>
+                        <Button
+                            size="sm"
+                            disabled={!selectedProjectId}
+                            className="gap-2"
+                            onClick={() => setIsCreateDialogOpen(true)}
+                        >
+                            <Plus className="h-4 w-4" />
+                            Add Task
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="relative">
@@ -113,7 +151,14 @@ export function TasksColumn() {
                             >
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2 flex-1">
-                                        <h3 className="font-medium text-sm">{task.name}</h3>
+                                        <div className="flex items-center gap-1">
+                                            {task.source_type === 'ai' ? (
+                                                <Bot className="h-3 w-3 text-blue-500" />
+                                            ) : (
+                                                <User className="h-3 w-3 text-green-500" />
+                                            )}
+                                            <h3 className="font-medium text-sm">{task.name}</h3>
+                                        </div>
                                         <span className={`px-2 py-1 rounded-full text-xs ${task.status === 'Done'
                                             ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
                                             : task.status === 'In Progress'
@@ -135,6 +180,18 @@ export function TasksColumn() {
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end" className="w-40">
+                                            {task.source_type === 'ai' && (
+                                                <>
+                                                    <DropdownMenuItem onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleGenerateAITasks(true);
+                                                    }} disabled={isGeneratingTasks}>
+                                                        <RefreshCw className="h-4 w-4 mr-2" />
+                                                        Refresh AI Tasks
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuSeparator />
+                                                </>
+                                            )}
                                             {task.status !== 'To-Do' && (
                                                 <DropdownMenuItem onClick={(e) => {
                                                     e.stopPropagation();

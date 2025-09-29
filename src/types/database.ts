@@ -9,6 +9,30 @@ export type Json =
 export type Database = {
     public: {
         Tables: {
+            ai_generations: {
+                Row: {
+                    entity_id: string
+                    entity_type: string
+                    generated_at: string | null
+                    generation_type: string
+                    id: string
+                }
+                Insert: {
+                    entity_id: string
+                    entity_type: string
+                    generated_at?: string | null
+                    generation_type: string
+                    id?: string
+                }
+                Update: {
+                    entity_id?: string
+                    entity_type?: string
+                    generated_at?: string | null
+                    generation_type?: string
+                    id?: string
+                }
+                Relationships: []
+            }
             users: {
                 Row: {
                     id: string
@@ -195,6 +219,7 @@ export type Database = {
                     name: string
                     order_index: number
                     status: string | null
+                    source_type: string | null
                     task_id: string
                     updated_at: string | null
                 }
@@ -204,6 +229,7 @@ export type Database = {
                     name: string
                     order_index: number
                     status?: string | null
+                    source_type?: string | null
                     task_id: string
                     updated_at?: string | null
                 }
@@ -213,6 +239,7 @@ export type Database = {
                     name?: string
                     order_index?: number
                     status?: string | null
+                    source_type?: string | null
                     task_id?: string
                     updated_at?: string | null
                 }
@@ -234,6 +261,7 @@ export type Database = {
                     order_index: number
                     project_id: string
                     status: string | null
+                    source_type: string | null
                     updated_at: string | null
                 }
                 Insert: {
@@ -243,6 +271,7 @@ export type Database = {
                     order_index: number
                     project_id: string
                     status?: string | null
+                    source_type?: string | null
                     updated_at?: string | null
                 }
                 Update: {
@@ -252,6 +281,7 @@ export type Database = {
                     order_index?: number
                     project_id?: string
                     status?: string | null
+                    source_type?: string | null
                     updated_at?: string | null
                 }
                 Relationships: [
@@ -314,8 +344,14 @@ export type Comment = Database['public']['Tables']['comments']['Row']
 export type CommentInsert = Database['public']['Tables']['comments']['Insert']
 export type CommentUpdate = Database['public']['Tables']['comments']['Update']
 
+export type AiGeneration = Database['public']['Tables']['ai_generations']['Row']
+export type AiGenerationInsert = Database['public']['Tables']['ai_generations']['Insert']
+export type AiGenerationUpdate = Database['public']['Tables']['ai_generations']['Update']
+
 // Status types
 export type ProjectStatus = 'Active' | 'Completed' | 'Archived'
 export type TaskStatus = 'To-Do' | 'In Progress' | 'Done'
 export type SubtaskStatus = 'To-Do' | 'In Progress' | 'Done'
 export type EntityType = 'project' | 'task' | 'subtask'
+export type SourceType = 'user' | 'ai'
+export type GenerationType = 'tasks' | 'subtasks'

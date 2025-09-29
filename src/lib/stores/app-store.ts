@@ -88,6 +88,10 @@ interface AppState {
     updateComment: (id: string, comment: Partial<Comment>) => Promise<void>
     deleteComment: (id: string) => Promise<void>
 
+    // AI Generation actions
+    generateAITasks: (projectId: string, refresh?: boolean) => Promise<any>
+    generateAISubtasks: (taskId: string, refresh?: boolean) => Promise<any>
+
     // Utility actions
     setLoading: (loading: boolean) => void
     setError: (error: string | null) => void
@@ -683,6 +687,41 @@ export const useAppStore = create<AppState>()(
                     })
                 } catch (error) {
                     set({ error: (error as Error).message })
+                } finally {
+                    set({ isLoading: false })
+                }
+            },
+
+            // AI Generation Actions
+            generateAITasks: async (projectId: string, refresh: boolean = false) => {
+                try {
+                    set({ isLoading: true, error: null })
+                    const result = await supabaseApiClient.generateTasks(projectId, refresh)
+
+                    // Refresh tasks for the project to include the new AI-generated tasks
+                    await get().loadTasks(projectId)
+
+                    return result
+                } catch (error) {
+                    set({ error: (error as Error).message })
+                    throw error
+                } finally {
+                    set({ isLoading: false })
+                }
+            },
+
+            generateAISubtasks: async (taskId: string, refresh: boolean = false) => {
+                try {
+                    set({ isLoading: true, error: null })
+                    const result = await supabaseApiClient.generateSubtasks(taskId, refresh)
+
+                    // Refresh subtasks for the task to include the new AI-generated subtasks
+                    await get().loadSubtasks(taskId)
+
+                    return result
+                } catch (error) {
+                    set({ error: (error as Error).message })
+                    throw error
                 } finally {
                     set({ isLoading: false })
                 }

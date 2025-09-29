@@ -8,6 +8,7 @@ type ProjectDetails = Database['public']['Tables']['project_details']['Row']
 type TaskDetails = Database['public']['Tables']['task_details']['Row']
 type SubtaskDetails = Database['public']['Tables']['subtask_details']['Row']
 type Comment = Database['public']['Tables']['comments']['Row']
+type AiGeneration = Database['public']['Tables']['ai_generations']['Row']
 
 class SupabaseApiClient {
     private userId: string | null = null
@@ -312,6 +313,52 @@ class SupabaseApiClient {
             .eq('id', id)
 
         if (error) throw error
+    }
+
+    // AI Generation methods
+    async generateTasks(projectId: string, refresh: boolean = false): Promise<{ tasks: any[], cached: boolean }> {
+        const response = await fetch('/api/ai/generate-tasks', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ projectId, refresh }),
+        })
+
+        if (!response.ok) {
+            throw new Error('Failed to generate tasks')
+        }
+
+        return response.json()
+    }
+
+    async generateSubtasks(taskId: string, refresh: boolean = false): Promise<{ subtasks: any[], cached: boolean }> {
+        const response = await fetch('/api/ai/generate-subtasks', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ taskId, refresh }),
+        })
+
+        if (!response.ok) {
+            throw new Error('Failed to generate subtasks')
+        }
+
+        return response.json()
+    }
+
+    // AI generation tracking
+    async getAiGenerations(entityType: 'project' | 'task', entityId: string): Promise<AiGeneration[]> {
+        const { data, error } = await supabase
+            .from('ai_generations')
+            .select('*')
+            .eq('entity_type', entityType)
+            .eq('entity_id', entityId)
+            .order('generated_at', { ascending: false })
+
+        if (error) throw error
+        return data || []
     }
 }
 
