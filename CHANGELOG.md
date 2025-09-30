@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed subtask and task interfaces to use proper Subtask and Task types instead of any
 - Removed unused `subtaskName` parameter from `handleAcceptSubtask` function
 - Added null check for entity before accessing properties in enhance-description route
+- Fixed missing `order_index` field in create-project-dialog causing TypeScript compilation error
 - All linter errors resolved and build now compiles successfully
 
 ### Added

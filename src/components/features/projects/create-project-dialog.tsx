@@ -58,6 +58,7 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
                 due_date: data.due_date || null,
                 status: 'Active',
                 archived: false,
+                order_index: 0,
             };
 
             await createProject(projectData);
