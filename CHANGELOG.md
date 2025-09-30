@@ -5,6 +5,53 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - 2025-09-30
+
+### Added
+- **Projects Drag and Drop**: Added drag and drop functionality for projects similar to tasks and subtasks
+- Visual drag handles (grip vertical icon) for easy project reordering
+- Smooth drag animations with opacity changes during dragging
+- Automatic order persistence - reordered projects maintain their position across sessions
+- Keyboard accessibility support for project drag and drop operations
+- Database migration (`002_add_project_order_index.sql`) to add `order_index` column to projects table
+- `reorderProjects` method in app store for handling project reordering
+- Projects now ordered by `order_index` instead of `created_at`
+- **Accept AI-Generated Tasks/Subtasks Feature**: Added comprehensive functionality to accept AI-generated content and convert it to user-generated
+- "Accept Task" and "Accept Subtask" options in dropdown menus for individual AI-generated items
+- "Accept All AI Tasks" and "Accept All AI Subtasks" buttons in column headers when AI items are present
+- Confirmation dialogs for individual and bulk accept operations with clear messaging
+- Backend API endpoints: `/api/ai/accept-task`, `/api/ai/accept-subtask`, `/api/ai/accept-all-tasks`, `/api/ai/accept-all-subtasks`
+- Database source_type conversion from 'ai' to 'user' when accepting AI-generated content
+- Real-time UI updates showing icon changes from AI (blue bot) to User (green user) after acceptance
+- Loading states and error handling for all accept operations
+- API client methods for accepting individual and bulk AI items
+- App store integration with accept methods and optimistic UI updates
+
+### Changed
+- **Projects Sidebar Redesign**: Completely redesigned projects sidebar with integrated drag and drop
+- Merged `project-item.tsx` functionality into `projects-sidebar.tsx` for better maintainability
+- Projects now use sortable list pattern similar to tasks and subtasks
+- Inline editing for project names directly in the sidebar
+- Removed status icon circle from project items for cleaner UI
+- Updated database types to include `order_index` field for projects
+- API client now assigns proper `order_index` when creating new projects
+- Updated TasksColumn and SubtasksColumn components to include accept functionality
+- Enhanced dropdown menus for AI items with accept options
+- Modified app store with new accept actions and proper state management
+- Expanded API client with comprehensive accept methods
+- Updated component interfaces to support accept operations and loading states
+- **Description Box Height**: Increased minimum height from 80px to 200px for better readability and easier editing
+- **Subtask Accept UX**: Removed confirmation popup for accepting individual AI-generated subtasks for smoother user experience
+
+### Fixed
+- Reordering disabled while search filters are active to prevent order_index corruption (applies to all entities)
+- Proper error handling for accept operations with user feedback
+- Loading state management during accept processes
+- Real-time state updates after successful accept operations
+
+### Removed
+- Removed standalone `project-item.tsx` component (functionality integrated into `projects-sidebar.tsx`)
+
 ## [Unreleased] - 2025-09-29
 
 ### Added

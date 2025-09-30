@@ -55,6 +55,7 @@ interface AppState {
     updateProject: (id: string, project: Partial<Project>) => Promise<void>
     deleteProject: (id: string) => Promise<void>
     archiveProject: (id: string, archived: boolean) => Promise<void>
+    reorderProjects: (projects: Project[]) => Promise<void>
 
     // Task actions
     loadTasks: (projectId: string) => Promise<void>
@@ -91,6 +92,12 @@ interface AppState {
     // AI Generation actions
     generateAITasks: (projectId: string, refresh?: boolean) => Promise<{ tasks: Task[], appended: boolean }>
     generateAISubtasks: (taskId: string, refresh?: boolean) => Promise<{ subtasks: Subtask[], appended: boolean }>
+
+    // Accept AI actions
+    acceptAiTask: (taskId: string) => Promise<void>
+    acceptAiSubtask: (subtaskId: string) => Promise<void>
+    acceptAllAiTasks: (projectId: string) => Promise<void>
+    acceptAllAiSubtasks: (taskId: string) => Promise<void>
 
     // Utility actions
     setLoading: (loading: boolean) => void
@@ -248,7 +255,6 @@ export const useAppStore = create<AppState>()(
                     if (!userId) throw new Error('User not authenticated')
 
                     set({ isLoading: true, error: null })
-                    // Ensure optional properties are null instead of undefined and include user_id
                     const sanitizedProject = {
                         ...project,
                         user_id: userId,
@@ -262,9 +268,8 @@ export const useAppStore = create<AppState>()(
                     if (!createdProject) throw new Error('Failed to create project')
 
                     const projects = get().projects
-                    set({ projects: [createdProject, ...projects] })
+                    set({ projects: [...projects, createdProject] })
 
-                    // Auto-select the newly created project
                     await get().setSelectedProject(createdProject.id)
                 } catch (error) {
                     set({ error: (error as Error).message })
@@ -314,6 +319,28 @@ export const useAppStore = create<AppState>()(
 
             archiveProject: async (id, archived) => {
                 await get().updateProject(id, { archived })
+            },
+
+            reorderProjects: async (projects) => {
+                try {
+                    set({ isLoading: true, error: null })
+
+                    const updates = projects.map((project, index) => ({
+                        id: project.id,
+                        order_index: index,
+                        updated_at: new Date().toISOString()
+                    }))
+
+                    await Promise.all(updates.map(async (update: { id: string; order_index: number; updated_at: string }) =>
+                        supabaseApiClient.updateProject(update.id, update)
+                    ))
+
+                    set({ projects })
+                } catch (error) {
+                    set({ error: (error as Error).message })
+                } finally {
+                    set({ isLoading: false })
+                }
             },
 
             // Project Details Actions
@@ -740,6 +767,89 @@ export const useAppStore = create<AppState>()(
                     await get().loadSubtasks(taskId)
 
                     return result
+                } catch (error) {
+                    set({ error: (error as Error).message })
+                    throw error
+                } finally {
+                    set({ isLoading: false })
+                }
+            },
+
+            // Accept AI Actions
+            acceptAiTask: async (taskId: string) => {
+                try {
+                    set({ isLoading: true, error: null })
+                    const result = await supabaseApiClient.acceptAiTask(taskId)
+
+                    // Update the task in the local state
+                    const tasks = get().tasks
+                    set({
+                        tasks: tasks.map(task =>
+                            task.id === taskId
+                                ? { ...task, source_type: 'user', updated_at: new Date().toISOString() }
+                                : task
+                        )
+                    })
+
+                    console.log(result.message)
+                } catch (error) {
+                    set({ error: (error as Error).message })
+                    throw error
+                } finally {
+                    set({ isLoading: false })
+                }
+            },
+
+            acceptAiSubtask: async (subtaskId: string) => {
+                try {
+                    set({ isLoading: true, error: null })
+                    const result = await supabaseApiClient.acceptAiSubtask(subtaskId)
+
+                    // Update the subtask in the local state
+                    const subtasks = get().subtasks
+                    set({
+                        subtasks: subtasks.map(subtask =>
+                            subtask.id === subtaskId
+                                ? { ...subtask, source_type: 'user', updated_at: new Date().toISOString() }
+                                : subtask
+                        )
+                    })
+
+                    console.log(result.message)
+                } catch (error) {
+                    set({ error: (error as Error).message })
+                    throw error
+                } finally {
+                    set({ isLoading: false })
+                }
+            },
+
+            acceptAllAiTasks: async (projectId: string) => {
+                try {
+                    set({ isLoading: true, error: null })
+                    const result = await supabaseApiClient.acceptAllAiTasks(projectId)
+
+                    // Refresh tasks to get the updated data
+                    await get().loadTasks(projectId)
+
+                    console.log(result.message)
+                } catch (error) {
+                    set({ error: (error as Error).message })
+                    throw error
+                } finally {
+                    set({ isLoading: false })
+                }
+            },
+
+            acceptAllAiSubtasks: async (taskId: string) => {
+                try {
+                    set({ isLoading: true, error: null })
+                    const result = await supabaseApiClient.acceptAllAiSubtasks(taskId)
+
+                    // Refresh subtasks to get the updated data
+                    await get().loadSubtasks(taskId)
+
+                    console.log(result.message)
                 } catch (error) {
                     set({ error: (error as Error).message })
                     throw error

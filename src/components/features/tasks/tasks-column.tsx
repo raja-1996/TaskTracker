@@ -5,7 +5,7 @@ import { useAppStore } from "@/lib/stores/app-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { InlineEdit } from "@/components/ui/inline-edit";
-import { Plus, Search, MoreHorizontal, CheckCircle2, Clock, PlayCircle, Trash2, RefreshCw, Bot, User, Edit, GripVertical } from "lucide-react";
+import { Plus, Search, MoreHorizontal, CheckCircle2, Clock, PlayCircle, Trash2, RefreshCw, Bot, User, Edit, GripVertical, UserCheck } from "lucide-react";
 import { CreateTaskDialog } from "./create-task-dialog";
 import {
     DropdownMenu,
@@ -46,7 +46,9 @@ interface SortableTaskItemProps {
     handleStatusChange: (taskId: string, status: TaskStatus) => void;
     handleDeleteTask: (taskId: string, taskName: string) => void;
     handleGenerateAITasks: (refresh?: boolean) => void;
+    handleAcceptTask: (taskId: string, taskName: string) => void;
     isGeneratingTasks: boolean;
+    isAcceptingTask: boolean;
 }
 
 function SortableTaskItem({
@@ -60,7 +62,9 @@ function SortableTaskItem({
     handleStatusChange,
     handleDeleteTask,
     handleGenerateAITasks,
+    handleAcceptTask,
     isGeneratingTasks,
+    isAcceptingTask,
 }: SortableTaskItemProps) {
     const {
         attributes,
@@ -150,6 +154,13 @@ function SortableTaskItem({
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={(e) => {
                                     e.stopPropagation();
+                                    handleAcceptTask(task.id, task.name);
+                                }} disabled={isAcceptingTask}>
+                                    <UserCheck className="h-4 w-4 mr-2" />
+                                    Accept Task
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={(e) => {
+                                    e.stopPropagation();
                                     handleGenerateAITasks(true);
                                 }} disabled={isGeneratingTasks}>
                                     <RefreshCw className="h-4 w-4 mr-2" />
@@ -212,11 +223,15 @@ export function TasksColumn() {
         deleteTask,
         generateAITasks,
         reorderTasks,
+        acceptAiTask,
+        acceptAllAiTasks,
     } = useAppStore();
 
     const [searchQuery, setSearchQuery] = useState("");
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
     const [isGeneratingTasks, setIsGeneratingTasks] = useState(false);
+    const [isAcceptingTask, setIsAcceptingTask] = useState(false);
+    const [isAcceptingAllTasks, setIsAcceptingAllTasks] = useState(false);
     const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
 
     const sensors = useSensors(
@@ -277,6 +292,39 @@ export function TasksColumn() {
         setEditingTaskId(taskId);
     };
 
+    const handleAcceptTask = async (taskId: string, taskName: string) => {
+        if (isAcceptingTask) return;
+
+        if (confirm(`Accept AI-generated task "${taskName}"? This will convert it to a user task.`)) {
+            setIsAcceptingTask(true);
+            try {
+                await acceptAiTask(taskId);
+            } catch (error) {
+                console.error('Failed to accept task:', error);
+            } finally {
+                setIsAcceptingTask(false);
+            }
+        }
+    };
+
+    const handleAcceptAllTasks = async () => {
+        if (!selectedProjectId || isAcceptingAllTasks) return;
+
+        const aiTasksCount = tasks.filter(task => task.source_type === 'ai').length;
+        if (aiTasksCount === 0) return;
+
+        if (confirm(`Accept all ${aiTasksCount} AI-generated task${aiTasksCount === 1 ? '' : 's'}? This will convert them to user tasks.`)) {
+            setIsAcceptingAllTasks(true);
+            try {
+                await acceptAllAiTasks(selectedProjectId);
+            } catch (error) {
+                console.error('Failed to accept all tasks:', error);
+            } finally {
+                setIsAcceptingAllTasks(false);
+            }
+        }
+    };
+
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
 
@@ -335,6 +383,22 @@ export function TasksColumn() {
                             )}
                             {isGeneratingTasks ? 'Generating...' : 'AI Tasks'}
                         </Button>
+                        {tasks.filter(task => task.source_type === 'ai').length > 0 && (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={!selectedProjectId || isAcceptingAllTasks}
+                                className="gap-2"
+                                onClick={handleAcceptAllTasks}
+                            >
+                                {isAcceptingAllTasks ? (
+                                    <RefreshCw className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <UserCheck className="h-4 w-4" />
+                                )}
+                                {isAcceptingAllTasks ? 'Accepting...' : 'Accept All AI'}
+                            </Button>
+                        )}
                         <Button
                             size="sm"
                             disabled={!selectedProjectId}
@@ -397,7 +461,9 @@ export function TasksColumn() {
                                         handleStatusChange={handleStatusChange}
                                         handleDeleteTask={handleDeleteTask}
                                         handleGenerateAITasks={handleGenerateAITasks}
+                                        handleAcceptTask={handleAcceptTask}
                                         isGeneratingTasks={isGeneratingTasks}
+                                        isAcceptingTask={isAcceptingTask}
                                     />
                                 ))}
                             </div>

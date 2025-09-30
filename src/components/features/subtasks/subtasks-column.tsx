@@ -5,7 +5,7 @@ import { useAppStore } from "@/lib/stores/app-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { InlineEdit } from "@/components/ui/inline-edit";
-import { Plus, Search, MoreHorizontal, CheckCircle2, Clock, PlayCircle, Trash2, RefreshCw, Bot, User, Edit, GripVertical } from "lucide-react";
+import { Plus, Search, MoreHorizontal, CheckCircle2, Clock, PlayCircle, Trash2, RefreshCw, Bot, User, Edit, GripVertical, UserCheck } from "lucide-react";
 import { CreateSubtaskDialog } from "./create-subtask-dialog";
 import {
     DropdownMenu,
@@ -46,7 +46,9 @@ interface SortableSubtaskItemProps {
     handleStatusChange: (subtaskId: string, status: SubtaskStatus) => void;
     handleDeleteSubtask: (subtaskId: string, subtaskName: string) => void;
     handleGenerateAISubtasks: (refresh?: boolean) => void;
+    handleAcceptSubtask: (subtaskId: string, subtaskName: string) => void;
     isGeneratingSubtasks: boolean;
+    isAcceptingSubtask: boolean;
 }
 
 function SortableSubtaskItem({
@@ -60,7 +62,9 @@ function SortableSubtaskItem({
     handleStatusChange,
     handleDeleteSubtask,
     handleGenerateAISubtasks,
+    handleAcceptSubtask,
     isGeneratingSubtasks,
+    isAcceptingSubtask,
 }: SortableSubtaskItemProps) {
     const {
         attributes,
@@ -150,6 +154,13 @@ function SortableSubtaskItem({
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={(e) => {
                                     e.stopPropagation();
+                                    handleAcceptSubtask(subtask.id, subtask.name);
+                                }} disabled={isAcceptingSubtask}>
+                                    <UserCheck className="h-4 w-4 mr-2" />
+                                    Accept Subtask
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={(e) => {
+                                    e.stopPropagation();
                                     handleGenerateAISubtasks(true);
                                 }} disabled={isGeneratingSubtasks}>
                                     <RefreshCw className="h-4 w-4 mr-2" />
@@ -211,11 +222,15 @@ export function SubtasksColumn() {
         deleteSubtask,
         generateAISubtasks,
         reorderSubtasks,
+        acceptAiSubtask,
+        acceptAllAiSubtasks,
     } = useAppStore();
 
     const [searchQuery, setSearchQuery] = useState("");
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
     const [isGeneratingSubtasks, setIsGeneratingSubtasks] = useState(false);
+    const [isAcceptingSubtask, setIsAcceptingSubtask] = useState(false);
+    const [isAcceptingAllSubtasks, setIsAcceptingAllSubtasks] = useState(false);
     const [editingSubtaskId, setEditingSubtaskId] = useState<string | null>(null);
 
     const sensors = useSensors(
@@ -268,6 +283,37 @@ export function SubtasksColumn() {
 
     const handleEditClick = (subtaskId: string) => {
         setEditingSubtaskId(subtaskId);
+    };
+
+    const handleAcceptSubtask = async (subtaskId: string, subtaskName: string) => {
+        if (isAcceptingSubtask) return;
+
+        setIsAcceptingSubtask(true);
+        try {
+            await acceptAiSubtask(subtaskId);
+        } catch (error) {
+            console.error('Failed to accept subtask:', error);
+        } finally {
+            setIsAcceptingSubtask(false);
+        }
+    };
+
+    const handleAcceptAllSubtasks = async () => {
+        if (!selectedTaskId || isAcceptingAllSubtasks) return;
+
+        const aiSubtasksCount = subtasks.filter(subtask => subtask.source_type === 'ai').length;
+        if (aiSubtasksCount === 0) return;
+
+        if (confirm(`Accept all ${aiSubtasksCount} AI-generated subtask${aiSubtasksCount === 1 ? '' : 's'}? This will convert them to user subtasks.`)) {
+            setIsAcceptingAllSubtasks(true);
+            try {
+                await acceptAllAiSubtasks(selectedTaskId);
+            } catch (error) {
+                console.error('Failed to accept all subtasks:', error);
+            } finally {
+                setIsAcceptingAllSubtasks(false);
+            }
+        }
     };
 
     const handleDragEnd = (event: DragEndEvent) => {
@@ -328,6 +374,22 @@ export function SubtasksColumn() {
                             )}
                             {isGeneratingSubtasks ? 'Generating...' : 'AI Subtasks'}
                         </Button>
+                        {subtasks.filter(subtask => subtask.source_type === 'ai').length > 0 && (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={!selectedTaskId || isAcceptingAllSubtasks}
+                                className="gap-2"
+                                onClick={handleAcceptAllSubtasks}
+                            >
+                                {isAcceptingAllSubtasks ? (
+                                    <RefreshCw className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <UserCheck className="h-4 w-4" />
+                                )}
+                                {isAcceptingAllSubtasks ? 'Accepting...' : 'Accept All AI'}
+                            </Button>
+                        )}
                         <Button
                             size="sm"
                             disabled={!selectedTaskId}
@@ -390,7 +452,9 @@ export function SubtasksColumn() {
                                         handleStatusChange={handleStatusChange}
                                         handleDeleteSubtask={handleDeleteSubtask}
                                         handleGenerateAISubtasks={handleGenerateAISubtasks}
+                                        handleAcceptSubtask={handleAcceptSubtask}
                                         isGeneratingSubtasks={isGeneratingSubtasks}
+                                        isAcceptingSubtask={isAcceptingSubtask}
                                     />
                                 ))}
                             </div>

@@ -180,7 +180,7 @@ export function DetailsPanel() {
                         value={description}
                         onChange={setDescription}
                         placeholder="Add a detailed description..."
-                        className="min-h-[80px]"
+                        className="min-h-[200px]"
                     />
                 </div>
 

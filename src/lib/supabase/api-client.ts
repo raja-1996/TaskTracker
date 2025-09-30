@@ -58,7 +58,7 @@ class SupabaseApiClient {
             .from('projects')
             .select('*')
             .eq('user_id', this.userId)
-            .order('created_at', { ascending: false })
+            .order('order_index', { ascending: true })
 
         if (error) throw error
         return data || []
@@ -68,9 +68,18 @@ class SupabaseApiClient {
         // Ensure user record exists before creating project
         await this.ensureUserExists()
 
+        if (!this.userId) throw new Error('User not authenticated')
+
+        const { count } = await supabase
+            .from('projects')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', this.userId)
+
+        const orderIndex = count || 0
+
         const { data, error } = await supabase
             .from('projects')
-            .insert(project)
+            .insert({ ...project, order_index: orderIndex })
             .select()
 
         if (error) throw error
@@ -359,6 +368,71 @@ class SupabaseApiClient {
 
         if (error) throw error
         return data || []
+    }
+
+    // Accept AI-generated tasks/subtasks
+    async acceptAiTask(taskId: string): Promise<{ task: Task, message: string }> {
+        const response = await fetch('/api/ai/accept-task', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ taskId }),
+        })
+
+        if (!response.ok) {
+            throw new Error('Failed to accept AI task')
+        }
+
+        return response.json()
+    }
+
+    async acceptAiSubtask(subtaskId: string): Promise<{ subtask: Subtask, message: string }> {
+        const response = await fetch('/api/ai/accept-subtask', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ subtaskId }),
+        })
+
+        if (!response.ok) {
+            throw new Error('Failed to accept AI subtask')
+        }
+
+        return response.json()
+    }
+
+    async acceptAllAiTasks(projectId: string): Promise<{ acceptedCount: number, tasks: Task[], message: string }> {
+        const response = await fetch('/api/ai/accept-all-tasks', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ projectId }),
+        })
+
+        if (!response.ok) {
+            throw new Error('Failed to accept all AI tasks')
+        }
+
+        return response.json()
+    }
+
+    async acceptAllAiSubtasks(taskId: string): Promise<{ acceptedCount: number, subtasks: Subtask[], message: string }> {
+        const response = await fetch('/api/ai/accept-all-subtasks', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ taskId }),
+        })
+
+        if (!response.ok) {
+            throw new Error('Failed to accept all AI subtasks')
+        }
+
+        return response.json()
     }
 }
 

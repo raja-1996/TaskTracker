@@ -30,7 +30,7 @@ export function RichTextEditor({
                 placeholder={placeholder}
                 disabled={disabled}
                 className={cn(
-                    "w-full min-h-[80px] p-3 text-sm border rounded-md resize-y",
+                    "w-full min-h-[200px] p-3 text-sm border rounded-md resize-y",
                     "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary",
                     "disabled:opacity-50 disabled:cursor-not-allowed",
                     "placeholder:text-muted-foreground",

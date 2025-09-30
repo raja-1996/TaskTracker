@@ -118,6 +118,7 @@ export type Database = {
                     id: string
                     user_id: string
                     name: string
+                    order_index: number
                     owner: string | null
                     status: string | null
                     updated_at: string | null
@@ -129,6 +130,7 @@ export type Database = {
                     id?: string
                     user_id: string
                     name: string
+                    order_index: number
                     owner?: string | null
                     status?: string | null
                     updated_at?: string | null
@@ -140,6 +142,7 @@ export type Database = {
                     id?: string
                     user_id?: string
                     name?: string
+                    order_index?: number
                     owner?: string | null
                     status?: string | null
                     updated_at?: string | null
