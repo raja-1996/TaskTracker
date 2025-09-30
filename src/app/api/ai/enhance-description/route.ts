@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { llmService } from '@/lib/services/llm-service'
-import { Database } from '@/types/database'
+import { Database, Project, Task, Subtask, ProjectDetails, TaskDetails, SubtaskDetails, Comment } from '@/types/database'
 
 export async function POST(request: NextRequest) {
     try {
@@ -43,9 +43,9 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Invalid entity type' }, { status: 400 })
         }
 
-        let entity: any = null
-        let details: any = null
-        let comments: any[] = []
+        let entity: Project | Task | Subtask | null = null
+        let details: ProjectDetails | TaskDetails | SubtaskDetails | null = null
+        let comments: Comment[] = []
 
         if (entityType === 'project') {
             const { data: project, error: projectError } = await supabase
@@ -146,6 +146,10 @@ export async function POST(request: NextRequest) {
                 .order('created_at', { ascending: true })
 
             comments = subtaskComments || []
+        }
+
+        if (!entity) {
+            return NextResponse.json({ error: 'Entity not found' }, { status: 404 })
         }
 
         const additionalContext = comments.length > 0

@@ -48,12 +48,6 @@ import { ProjectStatus } from "@/types/database";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
-const statusConfig = {
-    'Active': { icon: Circle, color: 'text-blue-500', bg: 'bg-blue-100 dark:bg-blue-900/20' },
-    'Completed': { icon: CheckCircle2, color: 'text-green-500', bg: 'bg-green-100 dark:bg-green-900/20' },
-    'Archived': { icon: Archive, color: 'text-gray-500', bg: 'bg-gray-100 dark:bg-gray-900/20' }
-};
-
 interface SortableProjectItemProps {
     project: Project;
     isSelected: boolean;

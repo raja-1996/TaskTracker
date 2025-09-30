@@ -14,7 +14,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { TaskStatus } from "@/types/database";
+import { TaskStatus, Task } from "@/types/database";
 import {
     DndContext,
     closestCenter,
@@ -36,7 +36,7 @@ import {
 } from '@dnd-kit/utilities';
 
 interface SortableTaskItemProps {
-    task: any;
+    task: Task;
     selectedTaskId: string | null;
     editingTaskId: string | null;
     handleTaskSelect: (taskId: string) => void;

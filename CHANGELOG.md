@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - 2025-09-30
 
+### Fixed
+- **CRITICAL Build Errors**: Fixed TypeScript and ESLint errors preventing production deployment
+- Replaced `any` types with proper TypeScript types (Project, Task, Subtask, Comment, Details types) in enhance-description API route
+- Removed unused `statusConfig` variable in projects-sidebar component
+- Fixed subtask and task interfaces to use proper Subtask and Task types instead of any
+- Removed unused `subtaskName` parameter from `handleAcceptSubtask` function
+- Added null check for entity before accessing properties in enhance-description route
+- All linter errors resolved and build now compiles successfully
+
 ### Added
 - **AI-Powered Description Enhancement**: Added functionality to enhance descriptions using LLM with structured formatting
 - "Enhance" button in details panel for projects, tasks, and subtasks to improve descriptions with AI

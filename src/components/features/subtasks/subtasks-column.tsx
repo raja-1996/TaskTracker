@@ -14,7 +14,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { SubtaskStatus } from "@/types/database";
+import { SubtaskStatus, Subtask } from "@/types/database";
 import {
     DndContext,
     closestCenter,
@@ -36,7 +36,7 @@ import {
 } from '@dnd-kit/utilities';
 
 interface SortableSubtaskItemProps {
-    subtask: any;
+    subtask: Subtask;
     selectedSubtaskId: string | null;
     editingSubtaskId: string | null;
     setSelectedSubtask: (subtaskId: string) => void;
@@ -46,7 +46,7 @@ interface SortableSubtaskItemProps {
     handleStatusChange: (subtaskId: string, status: SubtaskStatus) => void;
     handleDeleteSubtask: (subtaskId: string, subtaskName: string) => void;
     handleGenerateAISubtasks: (refresh?: boolean) => void;
-    handleAcceptSubtask: (subtaskId: string, subtaskName: string) => void;
+    handleAcceptSubtask: (subtaskId: string) => void;
     isGeneratingSubtasks: boolean;
     isAcceptingSubtask: boolean;
 }
@@ -154,7 +154,7 @@ function SortableSubtaskItem({
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={(e) => {
                                     e.stopPropagation();
-                                    handleAcceptSubtask(subtask.id, subtask.name);
+                                    handleAcceptSubtask(subtask.id);
                                 }} disabled={isAcceptingSubtask}>
                                     <UserCheck className="h-4 w-4 mr-2" />
                                     Accept Subtask
@@ -285,7 +285,7 @@ export function SubtasksColumn() {
         setEditingSubtaskId(subtaskId);
     };
 
-    const handleAcceptSubtask = async (subtaskId: string, subtaskName: string) => {
+    const handleAcceptSubtask = async (subtaskId: string) => {
         if (isAcceptingSubtask) return;
 
         setIsAcceptingSubtask(true);
