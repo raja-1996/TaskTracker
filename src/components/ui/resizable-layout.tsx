@@ -26,7 +26,7 @@ export function ResizableLayout({
                 if (saved) {
                     const parsedWidths = JSON.parse(saved);
                     if (Array.isArray(parsedWidths) && parsedWidths.length === children.length - 1) {
-                        return parsedWidths;
+                        return [...parsedWidths, 0];
                     }
                 }
             } catch (error) {
@@ -36,7 +36,7 @@ export function ResizableLayout({
 
         // Fall back to provided defaults or computed defaults
         if (defaultWidths.length > 0) {
-            return defaultWidths;
+            return [...defaultWidths, 0];
         }
         // Default equal widths for all panels except the last one
         const count = children.length;
@@ -83,20 +83,30 @@ export function ResizableLayout({
         const minWidth = minWidths[resizingIndex] || 200;
         const nextMinWidth = minWidths[resizingIndex + 1] || 200;
 
-        // Calculate new widths
         const currentWidth = newWidths[resizingIndex];
         const nextWidth = newWidths[resizingIndex + 1];
 
-        const newCurrentWidth = Math.max(minWidth, currentWidth + delta);
-        const newNextWidth = Math.max(nextMinWidth, nextWidth - delta);
+        const isNextColumnLast = resizingIndex + 1 === children.length - 1;
 
-        // Only update if both panels meet minimum width requirements
-        if (newCurrentWidth >= minWidth && newNextWidth >= nextMinWidth) {
-            newWidths[resizingIndex] = newCurrentWidth;
-            newWidths[resizingIndex + 1] = newNextWidth;
-            updateWidths(newWidths);
+        if (isNextColumnLast) {
+            const newCurrentWidth = Math.max(minWidth, currentWidth + delta);
+
+            if (newCurrentWidth >= minWidth) {
+                newWidths[resizingIndex] = newCurrentWidth;
+                newWidths[resizingIndex + 1] = 0;
+                updateWidths(newWidths);
+            }
+        } else {
+            const newCurrentWidth = Math.max(minWidth, currentWidth + delta);
+            const newNextWidth = Math.max(nextMinWidth, nextWidth - delta);
+
+            if (newCurrentWidth >= minWidth && newNextWidth >= nextMinWidth) {
+                newWidths[resizingIndex] = newCurrentWidth;
+                newWidths[resizingIndex + 1] = newNextWidth;
+                updateWidths(newWidths);
+            }
         }
-    }, [isResizing, resizingIndex, minWidths, updateWidths]);
+    }, [isResizing, resizingIndex, minWidths, updateWidths, children.length]);
 
     const handleMouseUp = useCallback(() => {
         setIsResizing(false);

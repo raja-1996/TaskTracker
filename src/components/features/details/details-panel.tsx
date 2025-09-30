@@ -5,7 +5,7 @@ import { useAppStore } from "@/lib/stores/app-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
-import { Send, MessageCircle, Save } from "lucide-react";
+import { Send, MessageCircle, Save, Sparkles } from "lucide-react";
 import { format } from "date-fns";
 
 export function DetailsPanel() {
@@ -29,6 +29,7 @@ export function DetailsPanel() {
     const [newComment, setNewComment] = useState("");
     const [isSavingDescription, setIsSavingDescription] = useState(false);
     const [isAddingComment, setIsAddingComment] = useState(false);
+    const [isEnhancingDescription, setIsEnhancingDescription] = useState(false);
 
     // Get current entity data based on type
     const currentEntity = React.useMemo(() => {
@@ -96,6 +97,48 @@ export function DetailsPanel() {
         }
     };
 
+
+    const handleEnhanceDescription = async () => {
+        if (!selectedEntityType || !selectedEntityId) return;
+
+        try {
+            setIsEnhancingDescription(true);
+
+            const response = await fetch('/api/ai/enhance-description', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    entityId: selectedEntityId,
+                    entityType: selectedEntityType,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to enhance description');
+            }
+
+            const data = await response.json();
+            setDescription(data.description);
+
+            switch (selectedEntityType) {
+                case 'project':
+                    await updateProjectDescription(selectedEntityId, data.description);
+                    break;
+                case 'task':
+                    await updateTaskDescription(selectedEntityId, data.description);
+                    break;
+                case 'subtask':
+                    await updateSubtaskDescription(selectedEntityId, data.description);
+                    break;
+            }
+        } catch (error) {
+            console.error("Failed to enhance description:", error);
+        } finally {
+            setIsEnhancingDescription(false);
+        }
+    };
 
     const handleAddComment = async () => {
         if (!selectedEntityType || !selectedEntityId || !newComment.trim()) return;
@@ -165,15 +208,27 @@ export function DetailsPanel() {
                 <div className="space-y-2">
                     <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">Description</span>
-                        <Button
-                            onClick={handleSaveDescription}
-                            disabled={isSavingDescription || (currentDetails?.description || "") === description}
-                            size="sm"
-                            className="h-6 px-2 text-xs"
-                        >
-                            <Save className="h-3 w-3 mr-1" />
-                            {isSavingDescription ? "Saving..." : "Save"}
-                        </Button>
+                        <div className="flex gap-2">
+                            <Button
+                                onClick={handleEnhanceDescription}
+                                disabled={isEnhancingDescription}
+                                size="sm"
+                                variant="outline"
+                                className="h-6 px-2 text-xs"
+                            >
+                                <Sparkles className="h-3 w-3 mr-1" />
+                                {isEnhancingDescription ? "Enhancing..." : "Enhance"}
+                            </Button>
+                            <Button
+                                onClick={handleSaveDescription}
+                                disabled={isSavingDescription || (currentDetails?.description || "") === description}
+                                size="sm"
+                                className="h-6 px-2 text-xs"
+                            >
+                                <Save className="h-3 w-3 mr-1" />
+                                {isSavingDescription ? "Saving..." : "Save"}
+                            </Button>
+                        </div>
                     </div>
 
                     <RichTextEditor

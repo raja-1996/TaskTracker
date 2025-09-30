@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] - 2025-09-30
 
 ### Added
+- **AI-Powered Description Enhancement**: Added functionality to enhance descriptions using LLM with structured formatting
+- "Enhance" button in details panel for projects, tasks, and subtasks to improve descriptions with AI
+- LLM-generated descriptions with markdown formatting (headers, subheaders, bullet points)
+- Enhanced descriptions include sections like Overview, Key Features, Objectives, Requirements, and Technical Details
+- Backend API endpoint `/api/ai/enhance-description` for processing description enhancements
+- `enhanceDescription` method in LLM service with structured prompt templates
+- Context-aware enhancement considering entity title, current description, and related comments
+- Automatic save and UI update after successful description enhancement
+- Loading states and error handling for enhancement operations
+- **Markdown Preview in Rich Text Editor**: Added Edit/Preview toggle to properly render markdown formatted descriptions
+- Preview mode displays formatted markdown with proper headers, lists, and styling
+- Edit mode shows raw markdown for editing
+- Integrated react-markdown for markdown rendering with custom component styling
 - **Projects Drag and Drop**: Added drag and drop functionality for projects similar to tasks and subtasks
 - Visual drag handles (grip vertical icon) for easy project reordering
 - Smooth drag animations with opacity changes during dragging
@@ -44,6 +57,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Subtask Accept UX**: Removed confirmation popup for accepting individual AI-generated subtasks for smoother user experience
 
 ### Fixed
+- **CRITICAL Resizable Layout Slider Bug**: Fixed subtasks and description panel slider not working properly
+- Corrected widths array initialization to always include the last flex column element (0)
+- Updated resize logic to handle the last flex column correctly - only adjusts the width of the resizable column before it
+- The last column (Details panel) now properly maintains its flex behavior while resizing adjacent columns
 - Reordering disabled while search filters are active to prevent order_index corruption (applies to all entities)
 - Proper error handling for accept operations with user feedback
 - Loading state management during accept processes

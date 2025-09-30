@@ -30,6 +30,10 @@ const SubtaskSchema = z.object({
     description: z.string().min(1).max(300)
 })
 
+const EnhancedDescriptionSchema = z.object({
+    description: z.string().min(1).max(2000)
+})
+
 // Prompt templates
 const PROJECT_TASKS_PROMPT = new PromptTemplate({
     template: `You are a project management assistant. Generate UNIQUE, NON-DUPLICATE tasks that complement existing work.
@@ -121,6 +125,53 @@ Response:`,
     inputVariables: ['projectTitle', 'projectDescription', 'projectComments', 'taskTitle', 'taskDescription', 'taskComments', 'existingSubtasks']
 })
 
+const ENHANCE_DESCRIPTION_PROMPT = new PromptTemplate({
+    template: `You are a technical writing assistant specializing in clear, structured documentation.
+
+Entity Information:
+Type: {entityType}
+Title: {entityTitle}
+Current Description: {currentDescription}
+Additional Context: {additionalContext}
+
+TASK:
+Enhance and restructure the current description to make it more professional, clear, and well-organized.
+
+REQUIREMENTS:
+1. Use markdown formatting with headers (##), subheaders (###), and bullet points (-)
+2. Structure the content logically with clear sections
+3. Expand on key points while keeping the description concise (max 2000 chars)
+4. Include sections like: Overview, Key Features, Objectives, Requirements, or Technical Details (as appropriate)
+5. Use bullet points for lists and key features
+6. Maintain the core meaning and intent of the original description
+7. If the original description is very short or vague, infer reasonable details based on the title and context
+
+FORMAT EXAMPLE:
+## Overview
+Brief introduction explaining what this is about.
+
+## Key Features
+- Feature 1: Description
+- Feature 2: Description
+- Feature 3: Description
+
+## Objectives
+- Primary goal
+- Secondary goal
+
+## Requirements
+- Requirement 1
+- Requirement 2
+
+Return ONLY a valid JSON object with this structure:
+{{
+  "description": "Enhanced markdown-formatted description (max 2000 chars)"
+}}
+
+Response:`,
+    inputVariables: ['entityType', 'entityTitle', 'currentDescription', 'additionalContext']
+})
+
 // Service interfaces
 export interface GenerateTasksRequest {
     projectTitle: string
@@ -164,6 +215,13 @@ export interface GeneratedTask {
 export interface GeneratedSubtask {
     title: string
     description: string
+}
+
+export interface EnhanceDescriptionRequest {
+    entityType: string
+    entityTitle: string
+    currentDescription: string
+    additionalContext?: string
 }
 
 class LLMService {
@@ -304,6 +362,52 @@ class LLMService {
         } catch (error) {
             console.error('Error generating subtasks:', error)
             throw new Error('Failed to generate subtasks')
+        }
+    }
+
+    async enhanceDescription(request: EnhanceDescriptionRequest): Promise<string> {
+        try {
+            const prompt = await ENHANCE_DESCRIPTION_PROMPT.format({
+                entityType: request.entityType,
+                entityTitle: request.entityTitle,
+                currentDescription: request.currentDescription || 'No description provided',
+                additionalContext: request.additionalContext || 'No additional context'
+            })
+
+            const response = await model.invoke(prompt)
+            const content = response.content.toString()
+
+            console.log('LLM Response for enhanced description:', content)
+
+            let jsonString = ''
+
+            const patterns = [
+                /\{[\s\S]*\}/,
+                /```json\s*(\{[\s\S]*?\})\s*```/,
+                /```\s*(\{[\s\S]*?\})\s*```,*/,
+            ]
+
+            for (const pattern of patterns) {
+                const match = content.match(pattern)
+                if (match) {
+                    jsonString = match[1] || match[0]
+                    break
+                }
+            }
+
+            if (!jsonString) {
+                console.error('No JSON object found in LLM response:', content)
+                throw new Error('No valid JSON found in response')
+            }
+
+            const parsedResponse = JSON.parse(jsonString)
+            console.log('Parsed enhanced description:', parsedResponse)
+
+            const validatedResponse = EnhancedDescriptionSchema.parse(parsedResponse)
+            return validatedResponse.description
+        } catch (error) {
+            console.error('Error enhancing description:', error)
+            throw new Error('Failed to enhance description')
         }
     }
 }
